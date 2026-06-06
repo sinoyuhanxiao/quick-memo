@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      margin: 0;
+      padding: 15px;
+      background: rgba(244, 241, 234, 0.85);
+      border: 1px solid rgba(139, 115, 85, 0.15);
+      border-radius: 12px;
+      color: #4a3f35;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      -webkit-app-region: drag;
+      box-shadow: 0 4px 20px rgba(139, 115, 85, 0.1);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid rgba(139, 115, 85, 0.15);
+      color: #4a3f35;
+      font-size: 1.5rem;
+      padding: 5px 0;
+      outline: none;
+      -webkit-app-region: no-drag;
+    }
+    input::placeholder { color: #a99a8b; }
+    input:focus { border-bottom-color: #c19a6b; }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      -webkit-app-region: no-drag;
+    }
+    .priorities { display: flex; gap: 5px; }
+    button {
+      background: rgba(139, 115, 85, 0.05);
+      border: 1px solid rgba(139, 115, 85, 0.15);
+      color: #8c7b6c;
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 5px 15px;
+    }
+    button.selected { background: #c19a6b; color: white; border-color: #c19a6b; }
+    #status { font-size: 0.8rem; color: #10b981; }
+  </style>
+</head>
+<body>
+  <input type="text" id="memoInput" placeholder="What's the idea? (Press Enter)" autofocus>
+  <div class="controls">
+    <div class="priorities">
+      <button data-val="1">1</button>
+      <button data-val="2">2</button>
+      <button data-val="3" class="selected">3</button>
+      <button data-val="4">4</button>
+      <button data-val="5">5</button>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    let priority = 3;
+
+    // Priority Selection
+    const btns = document.querySelectorAll('.priorities button');
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        btns.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        priority = parseInt(btn.dataset.val);
+        document.getElementById('memoInput').focus();
+      });
+    });
+
+    // Enter to submit
+    const input = document.getElementById('memoInput');
+    input.addEventListener('keydown', async (e) => {
+      if (e.key === 'Enter') {
+        const text = input.value.trim();
+        if (!text) return;
+        
+        document.getElementById('status').innerText = 'Saving...';
+        
+        try {
+          // Replace with production Vercel URL later
+          const url = 'http://localhost:3000/api/memo';
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, priority })
+          });
+          
+          if(res.ok) {
+            input.value = '';
+            document.getElementById('status').innerText = '';
+            ipcRenderer.send('close-window');
+          } else {
+            document.getElementById('status').innerText = 'Failed';
+          }
+        } catch (err) {
+          document.getElementById('status').innerText = 'Network Error';
+          console.error(err);
+        }
+      } else if (e.key === 'Escape') {
+        ipcRenderer.send('close-window');
+      }
+    });
+
+    // Auto-focus on show
+    window.addEventListener('focus', () => {
+      input.focus();
+    });
+  </script>
+</body>
+</html>

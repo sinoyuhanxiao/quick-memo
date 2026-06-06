@@ -1,0 +1,11 @@
+{
+  "name": "quick-memo-cli",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "enquirer": "^2.4.1"
+  }
+}
