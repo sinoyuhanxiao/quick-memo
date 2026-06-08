@@ -64,7 +64,6 @@ export default function MarkdownEditor() {
   };
 
   return (
-  return (
     <div className="page-container" style={{ padding: '0 4rem' }}>
       
       {/* Header section */}
