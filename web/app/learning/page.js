@@ -47,6 +47,19 @@ export default function LearningZone() {
     });
   };
 
+  const editLearning = async (id, newContent) => {
+    if (!newContent.trim()) return;
+    
+    // Optimistic UI update
+    setLearnings(prev => prev.map(l => l.id === id ? { ...l, content: newContent } : l));
+    
+    await fetch('/api/learning', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, content: newContent })
+    });
+  };
+
   // Group learnings by date
   const groupedLearnings = learnings.reduce((acc, curr) => {
     if (!acc[curr.date_category]) acc[curr.date_category] = [];
@@ -95,16 +108,12 @@ export default function LearningZone() {
               </h2>
               <div className="learning-items">
                 {groupedLearnings[date].map(item => (
-                  <div key={item.id} className="learning-item">
-                    <span className="learning-content">{item.content}</span>
-                    <button 
-                      onClick={() => deleteLearning(item.id)}
-                      className="learning-delete-btn"
-                      title="Delete"
-                    >
-                      🗑️
-                    </button>
-                  </div>
+                  <LearningRow 
+                    key={item.id} 
+                    item={item} 
+                    deleteLearning={deleteLearning} 
+                    editLearning={editLearning} 
+                  />
                 ))}
               </div>
             </div>
@@ -112,5 +121,47 @@ export default function LearningZone() {
         </div>
       )}
     </main>
+  );
+}
+
+function LearningRow({ item, deleteLearning, editLearning }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(item.content);
+
+  const saveEdit = () => {
+    setIsEditing(false);
+    if (editContent !== item.content) {
+      editLearning(item.id, editContent);
+    }
+  };
+
+  return (
+    <div className="learning-item">
+      {isEditing ? (
+        <textarea
+          value={editContent}
+          onChange={(e) => setEditContent(e.target.value)}
+          onBlur={saveEdit}
+          autoFocus
+          className="learning-textarea"
+          style={{ flex: 1, minHeight: '60px', padding: '0.5rem', marginBottom: 0 }}
+        />
+      ) : (
+        <span 
+          className="learning-content" 
+          onClick={() => setIsEditing(true)}
+          style={{ cursor: 'text', flex: 1 }}
+        >
+          {item.content}
+        </span>
+      )}
+      <button 
+        onClick={() => deleteLearning(item.id)}
+        className="learning-delete-btn"
+        title="Delete"
+      >
+        🗑️
+      </button>
+    </div>
   );
 }

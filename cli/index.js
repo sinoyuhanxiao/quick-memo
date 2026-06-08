@@ -101,6 +101,30 @@ async function deleteTasks(ids) {
     } catch (e) {}
 }
 
+async function deleteLearnings(ids) {
+    try {
+        for (const id of ids) {
+            await fetch(LEARNING_API_URL, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+        }
+        await fetchLearnings();
+    } catch (e) {}
+}
+
+async function updateLearning(id, content) {
+    try {
+        await fetch(LEARNING_API_URL, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, content })
+        });
+        await fetchLearnings();
+    } catch (e) {}
+}
+
 // Command Hints
 const COMMAND_HINTS = [
     { cmd: '/learn <text>', desc: 'Record a new learning for today' },
@@ -232,7 +256,13 @@ rl.on('line', async (line) => {
             for (const id of ids) await updateTask(id, false);
         } else if (cmd === '/delete' || cmd === '/rm') {
             const ids = parts.slice(1).map(p => parseInt(p.replace(/,/g, ''))).filter(id => !isNaN(id));
-            if (ids.length > 0) await deleteTasks(ids);
+            if (ids.length > 0) {
+                if (viewMode === 'learnings') {
+                    await deleteLearnings(ids);
+                } else {
+                    await deleteTasks(ids);
+                }
+            }
         } else if (cmd === '/refresh') {
             await fetchTasks();
         } else if (cmd === '/todos') {
@@ -254,31 +284,44 @@ rl.on('line', async (line) => {
             const id = parseInt(parts[1]);
             let newText = parts.slice(2).join(' ').trim();
             if (id) {
-                let newPriority = undefined;
-                let newCategory = undefined;
-                
-                const prioMatch = newText.match(/!(1|2|3|4|5)\b/);
-                if (prioMatch) {
-                    newPriority = parseInt(prioMatch[1]);
-                    newText = newText.replace(prioMatch[0], '').trim();
-                }
-
-                const catMatch = newText.match(/#(\w+)/);
-                if (catMatch) {
-                    newCategory = catMatch[1];
-                    newCategory = newCategory.charAt(0).toUpperCase() + newCategory.slice(1).toLowerCase();
-                    newText = newText.replace(catMatch[0], '').trim();
-                }
-
-                if (newText || newPriority !== undefined || newCategory !== undefined) {
-                    await updateTask(id, undefined, newText || undefined, newPriority, newCategory);
+                if (viewMode === 'learnings') {
+                    if (newText) {
+                        await updateLearning(id, newText);
+                    } else {
+                        const l = learnings.find(x => x.id === id);
+                        if (l) {
+                            drawUI();
+                            rl.write(`/edit ${id} ${l.content}`);
+                            return;
+                        }
+                    }
                 } else {
-                    const task = tasks.find(t => t.id === id);
-                    if (task) {
-                        drawUI();
-                        const catTag = task.category && task.category !== 'Uncategorized' ? ` #${task.category}` : '';
-                        rl.write(`/edit ${id} ${task.content} !${task.priority}${catTag}`);
-                        return;
+                    let newPriority = undefined;
+                    let newCategory = undefined;
+                    
+                    const prioMatch = newText.match(/!(1|2|3|4|5)\b/);
+                    if (prioMatch) {
+                        newPriority = parseInt(prioMatch[1]);
+                        newText = newText.replace(prioMatch[0], '').trim();
+                    }
+
+                    const catMatch = newText.match(/#(\w+)/);
+                    if (catMatch) {
+                        newCategory = catMatch[1];
+                        newCategory = newCategory.charAt(0).toUpperCase() + newCategory.slice(1).toLowerCase();
+                        newText = newText.replace(catMatch[0], '').trim();
+                    }
+
+                    if (newText || newPriority !== undefined || newCategory !== undefined) {
+                        await updateTask(id, undefined, newText || undefined, newPriority, newCategory);
+                    } else {
+                        const task = tasks.find(t => t.id === id);
+                        if (task) {
+                            drawUI();
+                            const catTag = task.category && task.category !== 'Uncategorized' ? ` #${task.category}` : '';
+                            rl.write(`/edit ${id} ${task.content} !${task.priority}${catTag}`);
+                            return;
+                        }
                     }
                 }
             }
