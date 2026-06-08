@@ -290,6 +290,8 @@ rl.on('line', async (line) => {
             const cat = parts.slice(1).join(' ').trim();
             if (!cat || cat.toLowerCase() === 'all' || cat.toLowerCase() === 'clear') {
                 filterCategory = null;
+            } else if (cat.toLowerCase() === 'none') {
+                filterCategory = 'Uncategorized';
             } else {
                 filterCategory = cat;
             }
