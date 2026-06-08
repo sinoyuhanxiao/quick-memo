@@ -364,6 +364,8 @@ rl.on('line', async (line) => {
         category = catMatch[1];
         category = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
         text = text.replace(catMatch[0], '').trim();
+    } else if (filterCategory) {
+        category = filterCategory;
     }
 
     if (text) {
