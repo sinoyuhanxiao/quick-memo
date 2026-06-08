@@ -24,6 +24,7 @@ let learnings = [];
 let currentSort = 'priority';
 let showHelp = false;
 let viewMode = 'pending'; // 'pending', 'completed', or 'learnings'
+let filterCategory = null;
 
 // Fetch from Next.js Cloud API
 async function fetchTasks() {
@@ -130,6 +131,7 @@ const COMMAND_HINTS = [
     { cmd: '/learn <text>', desc: 'Record a new learning for today' },
     { cmd: '/learnings', desc: 'Switch view to your Learning Zone' },
     { cmd: '/todos', desc: 'Switch view to your Todos' },
+    { cmd: '/filter <cat>', desc: 'Filter tasks by Category (e.g. /filter Work). Use /filter all to clear.' },
     { cmd: '/ai <text>', desc: 'Call AI to automatically categorize the memo' },
     { cmd: '/done <ids>', desc: 'Mark one or more tasks as completed' },
     { cmd: '/undo <ids>', desc: 'Mark completed tasks as pending again' },
@@ -179,10 +181,16 @@ function drawUI() {
             });
         }
     } else {
-        const displayTasks = viewMode === 'pending' ? tasks.filter(t => !t.is_completed) : tasks.filter(t => t.is_completed);
+        let displayTasks = viewMode === 'pending' ? tasks.filter(t => !t.is_completed) : tasks.filter(t => t.is_completed);
         
+        if (filterCategory) {
+            displayTasks = displayTasks.filter(t => (t.category || 'Uncategorized').toLowerCase() === filterCategory.toLowerCase());
+        }
+
         if (displayTasks.length === 0) {
-            if (viewMode === 'pending') {
+            if (filterCategory) {
+                console.log(`  ${c.dim}${c.italic}No ${viewMode} tasks in category '${filterCategory}'.${c.reset}\n`);
+            } else if (viewMode === 'pending') {
                 console.log(`  ${c.dim}${c.italic}No pending tasks. You are all caught up!${c.reset}\n`);
             } else {
                 console.log(`  ${c.dim}${c.italic}No completed tasks yet.${c.reset}\n`);
@@ -195,7 +203,8 @@ function drawUI() {
             }
             
             const title = viewMode === 'pending' ? 'PENDING IDEAS' : 'COMPLETED TASKS';
-            console.log(`  ${c.bold}${title} (Sorted by: ${currentSort === 'priority' ? 'Priority' : 'Newest'}):${c.reset}\n`);
+            const filterStr = filterCategory ? ` | Filter: ${filterCategory}` : '';
+            console.log(`  ${c.bold}${title} (Sorted by: ${currentSort === 'priority' ? 'Priority' : 'Newest'}${filterStr}):${c.reset}\n`);
             
             displayTasks.forEach(t => {
                 let prioBadge = '';
@@ -242,7 +251,7 @@ rl.on('line', async (line) => {
 
     const parts = input.split(' ');
     const cmd = parts[0].toLowerCase();
-    const localCommands = ['/exit', '/quit', '/done', '/undo', '/delete', '/rm', '/refresh', '/sort', '/edit', '/help', '/history', '/todos', '/learnings', '/learn'];
+    const localCommands = ['/exit', '/quit', '/done', '/undo', '/delete', '/rm', '/refresh', '/sort', '/edit', '/help', '/history', '/todos', '/learnings', '/learn', '/filter'];
 
     if (localCommands.includes(cmd)) {
         if (cmd === '/exit' || cmd === '/quit') {
@@ -276,6 +285,13 @@ rl.on('line', async (line) => {
             }
         } else if (cmd === '/sort') {
             currentSort = currentSort === 'priority' ? 'newest' : 'priority';
+        } else if (cmd === '/filter') {
+            const cat = parts.slice(1).join(' ').trim();
+            if (!cat || cat.toLowerCase() === 'all' || cat.toLowerCase() === 'clear') {
+                filterCategory = null;
+            } else {
+                filterCategory = cat;
+            }
         } else if (cmd === '/help') {
             showHelp = !showHelp;
         } else if (cmd === '/history') {

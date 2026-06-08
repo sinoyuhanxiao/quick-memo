@@ -6,6 +6,7 @@ export default function Dashboard() {
   const [memos, setMemos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('newest'); // 'newest' or 'priority'
+  const [filterCategory, setFilterCategory] = useState('All');
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState('');
 
@@ -79,6 +80,8 @@ export default function Dashboard() {
     return acc;
   }, {});
 
+  const allCategories = ['All', ...Object.keys(grouped).sort()];
+
   return (
     <main className="container page-container-narrow">
       <div className="dashboard-header">
@@ -91,6 +94,17 @@ export default function Dashboard() {
           >
             <option value="newest">Sort by Newest</option>
             <option value="priority">Sort by Priority (High to Low)</option>
+          </select>
+          <select 
+            value={filterCategory} 
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="sort-select"
+          >
+            {allCategories.map(cat => (
+              <option key={cat} value={cat}>
+                {cat === 'All' ? 'All Categories' : cat}
+              </option>
+            ))}
           </select>
           <Link href="/learning" className="nav-link" style={{ marginRight: '1rem' }}>
             🧠 Learning Zone
@@ -111,7 +125,9 @@ export default function Dashboard() {
           </Link>
         </div>
       ) : (
-        Object.entries(grouped).map(([cat, items]) => {
+        Object.entries(grouped)
+          .filter(([cat]) => filterCategory === 'All' || cat === filterCategory)
+          .map(([cat, items]) => {
           const activeItems = items.filter(i => !i.is_completed);
           const completedItems = items.filter(i => i.is_completed);
           
