@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 export default function Dashboard() {
   const [memos, setMemos] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('newest'); // 'newest' or 'priority'
   const [filterCategory, setFilterCategory] = useState('All');
@@ -21,12 +22,14 @@ export default function Dashboard() {
   }, []);
 
   const fetchData = () => {
-    fetch('/api/memo')
-      .then(res => res.json())
-      .then(data => {
-        if (data.memos) setMemos(data.memos);
-        setLoading(false);
-      });
+    Promise.all([
+      fetch('/api/memo').then(res => res.json()),
+      fetch('/api/categories').then(res => res.json())
+    ]).then(([memoData, catData]) => {
+      if (memoData.memos) setMemos(memoData.memos);
+      if (catData.categories) setCategories(catData.categories.map(c => c.name));
+      setLoading(false);
+    });
   };
 
   const toggleComplete = async (memo) => {
@@ -80,7 +83,9 @@ export default function Dashboard() {
     return acc;
   }, {});
 
-  const allCategories = ['All', ...Object.keys(grouped).sort()];
+  // Combine DB categories with any orphaned categories still in memos just in case
+  const uniqueCats = new Set([...categories, ...Object.keys(grouped)]);
+  const allCategories = ['All', ...Array.from(uniqueCats).sort()];
 
   return (
     <main className="container page-container-narrow">

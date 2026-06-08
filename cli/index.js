@@ -2,6 +2,7 @@ import readline from 'readline';
 
 const API_URL = 'http://localhost:3000/api/memo';
 const LEARNING_API_URL = 'http://localhost:3000/api/learning';
+const CATEGORY_API_URL = 'http://localhost:3000/api/categories';
 
 // ANSI Color Codes
 const c = {
@@ -21,6 +22,7 @@ const c = {
 
 let tasks = [];
 let learnings = [];
+let categories = [];
 let currentSort = 'priority';
 let showHelp = false;
 let viewMode = 'pending'; // 'pending', 'completed', or 'learnings'
@@ -48,6 +50,14 @@ async function fetchLearnings() {
             learnings = data.learnings;
         }
     } catch (err) {}
+}
+
+async function fetchCategories() {
+    try {
+        const res = await fetch(CATEGORY_API_URL);
+        const data = await res.json();
+        if (data.categories) categories = data.categories.map(c => c.name);
+    } catch (e) {}
 }
 
 async function addTask(text, priority, category) {
@@ -133,6 +143,10 @@ const COMMAND_HINTS = [
     { cmd: '/todos', desc: 'Switch view to your Todos (pending)' },
     { cmd: '/completed', desc: 'Switch view to your completed Todos' },
     { cmd: '/filter <cat>', desc: 'Filter tasks by Category (e.g. /filter Work). Use /filter all to clear.' },
+    { cmd: '/categories', desc: 'List all existing categories' },
+    { cmd: '/categories create <n>', desc: 'Create an empty category' },
+    { cmd: '/categories rename <o> <n>', desc: 'Rename a category globally' },
+    { cmd: '/categories delete <n>', desc: 'Delete a category globally' },
     { cmd: '/ai <text>', desc: 'Call AI to automatically categorize the memo' },
     { cmd: '/done <ids>', desc: 'Mark one or more tasks as completed' },
     { cmd: '/undo <ids>', desc: 'Mark completed tasks as pending again' },
@@ -252,7 +266,7 @@ rl.on('line', async (line) => {
 
     const parts = input.split(' ');
     const cmd = parts[0].toLowerCase();
-    const localCommands = ['/exit', '/quit', '/done', '/undo', '/delete', '/rm', '/refresh', '/sort', '/edit', '/help', '/history', '/todos', '/completed', '/done-list', '/learnings', '/learn', '/filter'];
+    const localCommands = ['/exit', '/quit', '/done', '/undo', '/delete', '/rm', '/refresh', '/sort', '/edit', '/help', '/history', '/todos', '/completed', '/done-list', '/learnings', '/learn', '/filter', '/categories'];
 
     if (localCommands.includes(cmd)) {
         if (cmd === '/exit' || cmd === '/quit') {
@@ -294,6 +308,37 @@ rl.on('line', async (line) => {
                 filterCategory = 'Uncategorized';
             } else {
                 filterCategory = cat;
+            }
+        } else if (cmd === '/categories') {
+            const action = parts[1] ? parts[1].toLowerCase() : null;
+            if (!action || action === 'list') {
+                console.log(`\n  ${c.bold}EXISTING CATEGORIES:${c.reset}`);
+                categories.forEach(cat => console.log(`  ${c.dim}-${c.reset} ${c.white}${cat}${c.reset}`));
+                if (categories.length === 0) console.log(`  ${c.dim}No categories yet.${c.reset}`);
+                console.log('');
+                rl.prompt();
+                return;
+            } else if (action === 'create') {
+                const name = parts.slice(2).join(' ').trim();
+                if (name) {
+                    await fetch(CATEGORY_API_URL, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name }) });
+                    await fetchCategories();
+                }
+            } else if (action === 'rename') {
+                const oldName = parts[2];
+                const newName = parts[3];
+                if (oldName && newName) {
+                    await fetch(CATEGORY_API_URL, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ oldName, newName }) });
+                    await fetchCategories();
+                    await fetchTasks();
+                }
+            } else if (action === 'delete') {
+                const name = parts.slice(2).join(' ').trim();
+                if (name) {
+                    await fetch(CATEGORY_API_URL, { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name }) });
+                    await fetchCategories();
+                    await fetchTasks();
+                }
             }
         } else if (cmd === '/help') {
             showHelp = !showHelp;
@@ -387,6 +432,7 @@ rl.on('line', async (line) => {
 async function init() {
     await fetchTasks();
     await fetchLearnings();
+    await fetchCategories();
     drawUI();
 }
 
