@@ -310,36 +310,44 @@ rl.on('line', async (line) => {
                 filterCategory = cat;
             }
         } else if (cmd === '/categories') {
-            const action = parts[1] ? parts[1].toLowerCase() : null;
-            if (!action || action === 'list') {
-                console.log(`\n  ${c.bold}EXISTING CATEGORIES:${c.reset}`);
-                categories.forEach(cat => console.log(`  ${c.dim}-${c.reset} ${c.white}${cat}${c.reset}`));
-                if (categories.length === 0) console.log(`  ${c.dim}No categories yet.${c.reset}`);
-                console.log('');
-                rl.prompt();
-                return;
-            } else if (action === 'create') {
-                const name = parts.slice(2).join(' ').trim();
+            const commandStr = input.slice(cmd.length).trim();
+            const args = [];
+            const regex = /"([^"]+)"|'([^']+)'|(\S+)/g;
+            let match;
+            while ((match = regex.exec(commandStr)) !== null) {
+                args.push(match[1] || match[2] || match[3]);
+            }
+            
+            const action = args[0] ? args[0].toLowerCase() : null;
+            if (action === 'create') {
+                const name = args.slice(1).join(' ').trim();
                 if (name) {
                     await fetch(CATEGORY_API_URL, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name }) });
                     await fetchCategories();
                 }
             } else if (action === 'rename') {
-                const oldName = parts[2];
-                const newName = parts[3];
+                const oldName = args[1];
+                const newName = args[2];
                 if (oldName && newName) {
                     await fetch(CATEGORY_API_URL, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ oldName, newName }) });
                     await fetchCategories();
                     await fetchTasks();
                 }
             } else if (action === 'delete') {
-                const name = parts.slice(2).join(' ').trim();
+                const name = args.slice(1).join(' ').trim();
                 if (name) {
                     await fetch(CATEGORY_API_URL, { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name }) });
                     await fetchCategories();
                     await fetchTasks();
                 }
             }
+
+            console.log(`\n  ${c.bold}EXISTING CATEGORIES:${c.reset}`);
+            categories.forEach(cat => console.log(`  ${c.dim}-${c.reset} ${c.white}${cat}${c.reset}`));
+            if (categories.length === 0) console.log(`  ${c.dim}No categories yet.${c.reset}`);
+            console.log('');
+            rl.prompt();
+            return;
         } else if (cmd === '/help') {
             showHelp = !showHelp;
         } else if (cmd === '/history') {
