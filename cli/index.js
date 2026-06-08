@@ -264,8 +264,14 @@ rl.on('line', async (line) => {
         return;
     }
 
-    const parts = input.split(' ');
-    const cmd = parts[0].toLowerCase();
+    const args = [];
+    const regex = /"([^"]+)"|'([^']+)'|(\S+)/g;
+    let match;
+    while ((match = regex.exec(input)) !== null) {
+        args.push(match[1] || match[2] || match[3]);
+    }
+    
+    const cmd = args[0] ? args[0].toLowerCase() : '';
     const localCommands = ['/exit', '/quit', '/done', '/undo', '/delete', '/rm', '/refresh', '/sort', '/edit', '/help', '/history', '/todos', '/completed', '/done-list', '/learnings', '/learn', '/filter', '/categories'];
 
     if (localCommands.includes(cmd)) {
@@ -273,13 +279,13 @@ rl.on('line', async (line) => {
             console.log(`\n${c.green}Goodbye!${c.reset}\n`);
             process.exit(0);
         } else if (cmd === '/done') {
-            const ids = parts.slice(1).map(p => parseInt(p.replace(/,/g, ''))).filter(id => !isNaN(id));
+            const ids = args.slice(1).map(p => parseInt(p.replace(/,/g, ''))).filter(id => !isNaN(id));
             for (const id of ids) await updateTask(id, true);
         } else if (cmd === '/undo') {
-            const ids = parts.slice(1).map(p => parseInt(p.replace(/,/g, ''))).filter(id => !isNaN(id));
+            const ids = args.slice(1).map(p => parseInt(p.replace(/,/g, ''))).filter(id => !isNaN(id));
             for (const id of ids) await updateTask(id, false);
         } else if (cmd === '/delete' || cmd === '/rm') {
-            const ids = parts.slice(1).map(p => parseInt(p.replace(/,/g, ''))).filter(id => !isNaN(id));
+            const ids = args.slice(1).map(p => parseInt(p.replace(/,/g, ''))).filter(id => !isNaN(id));
             if (ids.length > 0) {
                 if (viewMode === 'learnings') {
                     await deleteLearnings(ids);
@@ -294,14 +300,14 @@ rl.on('line', async (line) => {
         } else if (cmd === '/learnings') {
             viewMode = 'learnings';
         } else if (cmd === '/learn') {
-            const content = parts.slice(1).join(' ').trim();
+            const content = args.slice(1).join(' ').trim();
             if (content) {
                 await addLearning(content);
             }
         } else if (cmd === '/sort') {
             currentSort = currentSort === 'priority' ? 'newest' : 'priority';
         } else if (cmd === '/filter') {
-            const cat = parts.slice(1).join(' ').trim();
+            const cat = args.slice(1).join(' ').trim();
             if (!cat || cat.toLowerCase() === 'all' || cat.toLowerCase() === 'clear') {
                 filterCategory = null;
             } else if (cat.toLowerCase() === 'none') {
@@ -310,31 +316,23 @@ rl.on('line', async (line) => {
                 filterCategory = cat;
             }
         } else if (cmd === '/categories') {
-            const commandStr = input.slice(cmd.length).trim();
-            const args = [];
-            const regex = /"([^"]+)"|'([^']+)'|(\S+)/g;
-            let match;
-            while ((match = regex.exec(commandStr)) !== null) {
-                args.push(match[1] || match[2] || match[3]);
-            }
-            
-            const action = args[0] ? args[0].toLowerCase() : null;
+            const action = args[1] ? args[1].toLowerCase() : null;
             if (action === 'create') {
-                const name = args.slice(1).join(' ').trim();
+                const name = args.slice(2).join(' ').trim();
                 if (name) {
                     await fetch(CATEGORY_API_URL, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name }) });
                     await fetchCategories();
                 }
             } else if (action === 'rename') {
-                const oldName = args[1];
-                const newName = args[2];
+                const oldName = args[2];
+                const newName = args[3];
                 if (oldName && newName) {
                     await fetch(CATEGORY_API_URL, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ oldName, newName }) });
                     await fetchCategories();
                     await fetchTasks();
                 }
             } else if (action === 'delete') {
-                const name = args.slice(1).join(' ').trim();
+                const name = args.slice(2).join(' ').trim();
                 if (name) {
                     await fetch(CATEGORY_API_URL, { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name }) });
                     await fetchCategories();
@@ -355,8 +353,8 @@ rl.on('line', async (line) => {
         } else if (cmd === '/completed' || cmd === '/done-list') {
             viewMode = 'completed';
         } else if (cmd === '/edit') {
-            const id = parseInt(parts[1]);
-            let newText = parts.slice(2).join(' ').trim();
+            const id = parseInt(args[1]);
+            let newText = args.slice(2).join(' ').trim();
             if (id) {
                 if (viewMode === 'learnings') {
                     if (newText) {
