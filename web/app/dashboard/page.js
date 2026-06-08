@@ -159,7 +159,6 @@ export default function Dashboard() {
 
 function MemoRow({ item, toggleComplete, deleteMemo, startEdit, saveEdit, isEditing, editContent, setEditContent }) {
   return (
-  return (
     <div className="todo-row" style={{ opacity: item.is_completed ? 0.6 : 1 }}>
       <div className="todo-content-wrapper">
         <input 
