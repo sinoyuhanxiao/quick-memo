@@ -86,13 +86,25 @@ export async function POST(req) {
   }
 }
 
-export async function GET() {
+export async function GET(req) {
   try {
     if (!process.env.POSTGRES_URL) {
       return NextResponse.json({ memos: [], warning: 'No database configured' });
     }
     
-    const { rows } = await sql`SELECT * FROM memos ORDER BY id DESC LIMIT 50`;
+    const { searchParams } = new URL(req.url);
+    const q = searchParams.get('q');
+    
+    let rows;
+    if (q) {
+      const queryStr = `%${q}%`;
+      const result = await sql`SELECT * FROM memos WHERE content ILIKE ${queryStr} ORDER BY id DESC LIMIT 50`;
+      rows = result.rows;
+    } else {
+      const result = await sql`SELECT * FROM memos ORDER BY id DESC LIMIT 50`;
+      rows = result.rows;
+    }
+    
     return NextResponse.json({ memos: rows });
   } catch (error) {
     console.error('Failed to fetch memos:', error);

@@ -8,6 +8,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('newest'); // 'newest' or 'priority'
   const [filterCategory, setFilterCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState('');
 
@@ -67,16 +68,17 @@ export default function Dashboard() {
     });
   };
 
-  // Sort and group
-  const sortedMemos = [...memos].sort((a, b) => {
-    if (sortBy === 'priority') {
-      return b.priority - a.priority;
-    }
-    // Newest is default (assuming id represents insertion order)
-    return b.id - a.id;
-  });
+  // Sort and filter
+  const processedMemos = [...memos]
+    .filter(m => !searchQuery || m.content.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === 'priority') {
+        return b.priority - a.priority;
+      }
+      return b.id - a.id;
+    });
 
-  const grouped = sortedMemos.reduce((acc, memo) => {
+  const grouped = processedMemos.reduce((acc, memo) => {
     const cat = memo.category || 'Uncategorized';
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(memo);
@@ -103,12 +105,10 @@ export default function Dashboard() {
           <select 
             value={filterCategory} 
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="sort-select"
+            className="filter-select"
           >
             {allCategories.map(cat => (
-              <option key={cat} value={cat}>
-                {cat === 'All' ? 'All Categories' : cat}
-              </option>
+              <option key={cat} value={cat}>{cat === 'All' ? 'All Categories' : cat}</option>
             ))}
           </select>
           <Link href="/learning" className="nav-link" style={{ marginRight: '1rem' }}>
@@ -119,7 +119,17 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
-      
+      <div className="search-container" style={{ marginBottom: '20px' }}>
+        <input 
+          type="text" 
+          placeholder="🔍 Search ideas..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-input"
+          style={{ width: '100%', padding: '10px 15px', borderRadius: '8px', border: '1px solid rgba(139, 115, 85, 0.2)', background: 'rgba(255, 255, 255, 0.5)', outline: 'none', color: '#4a3f35', fontSize: '1rem' }}
+        />
+      </div>
+
       {loading ? (
         <p style={{ color: 'var(--text-secondary)' }}>Loading your genius ideas...</p>
       ) : Object.keys(grouped).length === 0 ? (

@@ -25,8 +25,9 @@ let learnings = [];
 let categories = [];
 let currentSort = 'priority';
 let showHelp = false;
-let viewMode = 'pending'; // 'pending', 'completed', or 'learnings'
+let viewMode = 'pending'; // 'pending', 'completed', 'learnings', or 'search'
 let filterCategory = null;
+let searchResults = { tasks: [], learnings: [], query: '' };
 
 // Fetch from Next.js Cloud API
 async function fetchTasks() {
@@ -147,6 +148,7 @@ const COMMAND_HINTS = [
     { cmd: '/categories create <n>', desc: 'Create an empty category' },
     { cmd: '/categories rename <o> <n>', desc: 'Rename a category globally' },
     { cmd: '/categories delete <n>', desc: 'Delete a category globally' },
+    { cmd: '/search <keyword>', desc: 'Search across all Todos and Learnings' },
     { cmd: '/ai <text>', desc: 'Call AI to automatically categorize the memo' },
     { cmd: '/done <ids>', desc: 'Mark one or more tasks as completed' },
     { cmd: '/undo <ids>', desc: 'Mark completed tasks as pending again' },
@@ -174,7 +176,30 @@ function drawUI() {
     console.log(`${c.bold}${c.cyan}║${c.reset}${c.bold}               🔥 QUICK MEMO TERMINAL (SYNCED)                  ${c.cyan}║${c.reset}`);
     console.log(`${c.bold}${c.cyan}╚════════════════════════════════════════════════════════════════╝${c.reset}\n`);
 
-    if (viewMode === 'learnings') {
+    if (viewMode === 'search') {
+        console.log(`  ${c.bold}🔍 SEARCH RESULTS FOR: "${searchResults.query}"${c.reset}\n`);
+        
+        if (searchResults.tasks.length === 0 && searchResults.learnings.length === 0) {
+            console.log(`  ${c.dim}${c.italic}No results found.${c.reset}\n`);
+        }
+        
+        if (searchResults.tasks.length > 0) {
+            console.log(`  ${c.bold}TODOS (${searchResults.tasks.length})${c.reset}`);
+            searchResults.tasks.forEach(t => {
+                const statusBadge = t.is_completed ? `${c.dim}[Done]${c.reset}` : `${c.yellow}[Pending]${c.reset}`;
+                console.log(`  ${c.cyan}${t.id.toString().padStart(3, ' ')}.${c.reset} ${statusBadge} ${c.white}${t.content}${c.reset}`);
+            });
+            console.log('');
+        }
+        
+        if (searchResults.learnings.length > 0) {
+            console.log(`  ${c.bold}LEARNINGS (${searchResults.learnings.length})${c.reset}`);
+            searchResults.learnings.forEach(l => {
+                console.log(`  ${c.cyan}${l.id.toString().padStart(3, ' ')}.${c.reset} ${c.dim}[${l.date_category}]${c.reset} ${c.white}${l.content}${c.reset}`);
+            });
+            console.log('');
+        }
+    } else if (viewMode === 'learnings') {
         console.log(`  ${c.bold}LEARNING ZONE (Grouped by Date)${c.reset}\n`);
         
         if (learnings.length === 0) {
@@ -272,7 +297,7 @@ rl.on('line', async (line) => {
     }
     
     const cmd = args[0] ? args[0].toLowerCase() : '';
-    const localCommands = ['/exit', '/quit', '/done', '/undo', '/delete', '/rm', '/refresh', '/sort', '/edit', '/help', '/history', '/todos', '/completed', '/done-list', '/learnings', '/learn', '/filter', '/categories'];
+    const localCommands = ['/exit', '/quit', '/done', '/undo', '/delete', '/rm', '/refresh', '/sort', '/edit', '/help', '/history', '/todos', '/completed', '/done-list', '/learnings', '/learn', '/filter', '/categories', '/search'];
 
     if (localCommands.includes(cmd)) {
         if (cmd === '/exit' || cmd === '/quit') {
@@ -346,6 +371,26 @@ rl.on('line', async (line) => {
             console.log('');
             rl.prompt();
             return;
+        } else if (cmd === '/search') {
+            const query = args.slice(1).join(' ').trim();
+            if (query) {
+                try {
+                    const taskRes = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`);
+                    const taskData = await taskRes.json();
+                    
+                    const learnRes = await fetch(`${LEARNING_API_URL}?q=${encodeURIComponent(query)}`);
+                    const learnData = await learnRes.json();
+                    
+                    searchResults = {
+                        query,
+                        tasks: taskData.memos || [],
+                        learnings: learnData.learnings || []
+                    };
+                    viewMode = 'search';
+                } catch (e) {
+                    console.log(`\n  ${c.red}Search failed.${c.reset}\n`);
+                }
+            }
         } else if (cmd === '/help') {
             showHelp = !showHelp;
         } else if (cmd === '/history') {

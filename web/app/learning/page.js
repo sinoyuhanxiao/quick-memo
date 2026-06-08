@@ -5,6 +5,7 @@ import Link from 'next/link';
 export default function LearningZone() {
   const [learnings, setLearnings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [inputContent, setInputContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,7 +62,11 @@ export default function LearningZone() {
   };
 
   // Group learnings by date
-  const groupedLearnings = learnings.reduce((acc, curr) => {
+  const processedLearnings = learnings.filter(l => 
+    !searchQuery || l.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const groupedLearnings = processedLearnings.reduce((acc, curr) => {
     if (!acc[curr.date_category]) acc[curr.date_category] = [];
     acc[curr.date_category].push(curr);
     return acc;
@@ -93,6 +98,17 @@ export default function LearningZone() {
             {isSubmitting ? 'Recording...' : 'Record Learning'}
           </button>
         </form>
+      </div>
+
+      <div className="search-container" style={{ marginBottom: '20px' }}>
+        <input 
+          type="text" 
+          placeholder="🔍 Search learnings..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-input"
+          style={{ width: '100%', padding: '10px 15px', borderRadius: '8px', border: '1px solid rgba(139, 115, 85, 0.2)', background: 'rgba(255, 255, 255, 0.5)', outline: 'none', color: '#4a3f35', fontSize: '1rem' }}
+        />
       </div>
 
       {loading ? (

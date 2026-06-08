@@ -51,14 +51,26 @@ export async function POST(req) {
   }
 }
 
-export async function GET() {
+export async function GET(req) {
   try {
     await ensureTableExists();
     if (!process.env.POSTGRES_URL) {
       return NextResponse.json({ learnings: [], warning: 'No database configured' });
     }
     
-    const { rows } = await sql`SELECT * FROM learnings ORDER BY date_category DESC, id DESC LIMIT 100`;
+    const { searchParams } = new URL(req.url);
+    const q = searchParams.get('q');
+    
+    let rows;
+    if (q) {
+      const queryStr = `%${q}%`;
+      const result = await sql`SELECT * FROM learnings WHERE content ILIKE ${queryStr} ORDER BY date_category DESC, id DESC LIMIT 100`;
+      rows = result.rows;
+    } else {
+      const result = await sql`SELECT * FROM learnings ORDER BY date_category DESC, id DESC LIMIT 100`;
+      rows = result.rows;
+    }
+    
     return NextResponse.json({ learnings: rows });
   } catch (error) {
     console.error('Failed to fetch learnings:', error);

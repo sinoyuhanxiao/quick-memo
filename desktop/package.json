@@ -5,13 +5,22 @@
   "main": "index.js",
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:win": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "com.quickmemo.app",
+    "productName": "QuickMemo",
+    "win": {
+      "target": ["portable", "nsis"]
+    }
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "electron": "^41.7.1"
+    "electron": "^41.7.1",
+    "electron-builder": "^26.15.2"
   }
 }
