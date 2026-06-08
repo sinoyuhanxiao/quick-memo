@@ -130,7 +130,8 @@ async function updateLearning(id, content) {
 const COMMAND_HINTS = [
     { cmd: '/learn <text>', desc: 'Record a new learning for today' },
     { cmd: '/learnings', desc: 'Switch view to your Learning Zone' },
-    { cmd: '/todos', desc: 'Switch view to your Todos' },
+    { cmd: '/todos', desc: 'Switch view to your Todos (pending)' },
+    { cmd: '/completed', desc: 'Switch view to your completed Todos' },
     { cmd: '/filter <cat>', desc: 'Filter tasks by Category (e.g. /filter Work). Use /filter all to clear.' },
     { cmd: '/ai <text>', desc: 'Call AI to automatically categorize the memo' },
     { cmd: '/done <ids>', desc: 'Mark one or more tasks as completed' },
@@ -251,7 +252,7 @@ rl.on('line', async (line) => {
 
     const parts = input.split(' ');
     const cmd = parts[0].toLowerCase();
-    const localCommands = ['/exit', '/quit', '/done', '/undo', '/delete', '/rm', '/refresh', '/sort', '/edit', '/help', '/history', '/todos', '/learnings', '/learn', '/filter'];
+    const localCommands = ['/exit', '/quit', '/done', '/undo', '/delete', '/rm', '/refresh', '/sort', '/edit', '/help', '/history', '/todos', '/completed', '/done-list', '/learnings', '/learn', '/filter'];
 
     if (localCommands.includes(cmd)) {
         if (cmd === '/exit' || cmd === '/quit') {
@@ -296,6 +297,8 @@ rl.on('line', async (line) => {
             showHelp = !showHelp;
         } else if (cmd === '/history') {
             viewMode = viewMode === 'pending' ? 'completed' : 'pending';
+        } else if (cmd === '/completed' || cmd === '/done-list') {
+            viewMode = 'completed';
         } else if (cmd === '/edit') {
             const id = parseInt(parts[1]);
             let newText = parts.slice(2).join(' ').trim();
