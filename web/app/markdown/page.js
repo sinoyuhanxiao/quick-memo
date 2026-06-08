@@ -69,9 +69,14 @@ export default function MarkdownEditor() {
       {/* Header section */}
       <div style={{ width: '100%', maxWidth: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', padding: '0 4rem' }}>
         <div>
-          <Link href="/dashboard" style={{ textDecoration: 'none', color: 'var(--accent-color)', fontWeight: 'bold', marginBottom: '1rem', display: 'inline-block' }}>
-            ← Back to Dashboard
-          </Link>
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+            <Link href="/dashboard" style={{ textDecoration: 'none', color: 'var(--accent-color)', fontWeight: 'bold' }}>
+              ← Back to Dashboard
+            </Link>
+            <Link href="/learning" style={{ textDecoration: 'none', color: 'var(--accent-color)', fontWeight: 'bold' }}>
+              🧠 Learning Zone
+            </Link>
+          </div>
           <h1 style={{ fontSize: '2.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
             📝 Markdown Workspace
           </h1>

@@ -1,6 +1,7 @@
 import readline from 'readline';
 
 const API_URL = 'http://localhost:3000/api/memo';
+const LEARNING_API_URL = 'http://localhost:3000/api/learning';
 
 // ANSI Color Codes
 const c = {
@@ -19,9 +20,10 @@ const c = {
 };
 
 let tasks = [];
+let learnings = [];
 let currentSort = 'priority';
 let showHelp = false;
-let viewMode = 'pending';
+let viewMode = 'pending'; // 'pending', 'completed', or 'learnings'
 
 // Fetch from Next.js Cloud API
 async function fetchTasks() {
@@ -37,6 +39,16 @@ async function fetchTasks() {
     }
 }
 
+async function fetchLearnings() {
+    try {
+        const res = await fetch(LEARNING_API_URL);
+        const data = await res.json();
+        if (data.learnings) {
+            learnings = data.learnings;
+        }
+    } catch (err) {}
+}
+
 async function addTask(text, priority, category) {
     try {
         await fetch(API_URL, {
@@ -45,6 +57,17 @@ async function addTask(text, priority, category) {
             body: JSON.stringify({ text, priority, category })
         });
         await fetchTasks();
+    } catch (e) {}
+}
+
+async function addLearning(content) {
+    try {
+        await fetch(LEARNING_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content })
+        });
+        await fetchLearnings();
     } catch (e) {}
 }
 
@@ -80,6 +103,9 @@ async function deleteTasks(ids) {
 
 // Command Hints
 const COMMAND_HINTS = [
+    { cmd: '/learn <text>', desc: 'Record a new learning for today' },
+    { cmd: '/learnings', desc: 'Switch view to your Learning Zone' },
+    { cmd: '/todos', desc: 'Switch view to your Todos' },
     { cmd: '/ai <text>', desc: 'Call AI to automatically categorize the memo' },
     { cmd: '/done <ids>', desc: 'Mark one or more tasks as completed' },
     { cmd: '/undo <ids>', desc: 'Mark completed tasks as pending again' },
@@ -107,39 +133,62 @@ function drawUI() {
     console.log(`${c.bold}${c.cyan}║${c.reset}${c.bold}               🔥 QUICK MEMO TERMINAL (SYNCED)                  ${c.cyan}║${c.reset}`);
     console.log(`${c.bold}${c.cyan}╚════════════════════════════════════════════════════════════════╝${c.reset}\n`);
 
-    const displayTasks = viewMode === 'pending' ? tasks.filter(t => !t.is_completed) : tasks.filter(t => t.is_completed);
-    
-    if (displayTasks.length === 0) {
-        if (viewMode === 'pending') {
-            console.log(`  ${c.dim}${c.italic}No pending tasks. You are all caught up!${c.reset}\n`);
+    if (viewMode === 'learnings') {
+        console.log(`  ${c.bold}LEARNING ZONE (Grouped by Date)${c.reset}\n`);
+        
+        if (learnings.length === 0) {
+            console.log(`  ${c.dim}${c.italic}No learnings recorded yet. Start learning!${c.reset}\n`);
         } else {
-            console.log(`  ${c.dim}${c.italic}No completed tasks yet.${c.reset}\n`);
+            const grouped = learnings.reduce((acc, curr) => {
+                if (!acc[curr.date_category]) acc[curr.date_category] = [];
+                acc[curr.date_category].push(curr);
+                return acc;
+            }, {});
+            
+            Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a)).forEach(date => {
+                console.log(`  ${c.bold}${c.magenta}📅 ${date}${c.reset}`);
+                grouped[date].forEach(l => {
+                    const idStr = `${c.bold}${c.cyan}${l.id.toString().padStart(3, ' ')}.${c.reset}`;
+                    console.log(`    ${idStr} ${c.white}${l.content}${c.reset}`);
+                });
+                console.log('');
+            });
         }
     } else {
-        if (currentSort === 'priority') {
-            displayTasks.sort((a, b) => b.priority - a.priority);
+        const displayTasks = viewMode === 'pending' ? tasks.filter(t => !t.is_completed) : tasks.filter(t => t.is_completed);
+        
+        if (displayTasks.length === 0) {
+            if (viewMode === 'pending') {
+                console.log(`  ${c.dim}${c.italic}No pending tasks. You are all caught up!${c.reset}\n`);
+            } else {
+                console.log(`  ${c.dim}${c.italic}No completed tasks yet.${c.reset}\n`);
+            }
         } else {
-            displayTasks.sort((a, b) => b.id - a.id);
-        }
-        
-        const title = viewMode === 'pending' ? 'PENDING IDEAS' : 'COMPLETED TASKS';
-        console.log(`  ${c.bold}${title} (Sorted by: ${currentSort === 'priority' ? 'Priority' : 'Newest'}):${c.reset}\n`);
-        
-        displayTasks.forEach(t => {
-            let prioBadge = '';
-            if (t.priority === 5) prioBadge = `${c.bgBlack}${c.red}[P5 High]${c.reset}`;
-            else if (t.priority === 4) prioBadge = `${c.bgBlack}${c.yellow}[P4 Med+]${c.reset}`;
-            else if (t.priority === 3) prioBadge = `${c.bgBlack}${c.magenta}[P3 Med ]${c.reset}`;
-            else if (t.priority === 2) prioBadge = `${c.bgBlack}${c.green}[P2 Low+]${c.reset}`;
-            else if (t.priority === 1) prioBadge = `${c.bgBlack}${c.blue}[P1 Low ]${c.reset}`;
-            else prioBadge = `${c.bgBlack}${c.magenta}[P3 Med ]${c.reset}`;
-
-            const catBadge = t.category && t.category !== 'Uncategorized' ? `${c.dim}[${t.category}]${c.reset}` : '';
-            const idStr = `${c.bold}${c.cyan}${t.id.toString().padStart(3, ' ')}.${c.reset}`;
+            if (currentSort === 'priority') {
+                displayTasks.sort((a, b) => b.priority - a.priority);
+            } else {
+                displayTasks.sort((a, b) => b.id - a.id);
+            }
             
-            console.log(`  ${idStr} ${prioBadge} ${catBadge} ${c.white}${t.content}${c.reset}`);
-        });
-        console.log('');
+            const title = viewMode === 'pending' ? 'PENDING IDEAS' : 'COMPLETED TASKS';
+            console.log(`  ${c.bold}${title} (Sorted by: ${currentSort === 'priority' ? 'Priority' : 'Newest'}):${c.reset}\n`);
+            
+            displayTasks.forEach(t => {
+                let prioBadge = '';
+                if (t.priority === 5) prioBadge = `${c.bgBlack}${c.red}[P5 High]${c.reset}`;
+                else if (t.priority === 4) prioBadge = `${c.bgBlack}${c.yellow}[P4 Med+]${c.reset}`;
+                else if (t.priority === 3) prioBadge = `${c.bgBlack}${c.magenta}[P3 Med ]${c.reset}`;
+                else if (t.priority === 2) prioBadge = `${c.bgBlack}${c.green}[P2 Low+]${c.reset}`;
+                else if (t.priority === 1) prioBadge = `${c.bgBlack}${c.blue}[P1 Low ]${c.reset}`;
+                else prioBadge = `${c.bgBlack}${c.magenta}[P3 Med ]${c.reset}`;
+
+                const catBadge = t.category && t.category !== 'Uncategorized' ? `${c.dim}[${t.category}]${c.reset}` : '';
+                const idStr = `${c.bold}${c.cyan}${t.id.toString().padStart(3, ' ')}.${c.reset}`;
+                
+                console.log(`  ${idStr} ${prioBadge} ${catBadge} ${c.white}${t.content}${c.reset}`);
+            });
+            console.log('');
+        }
     }
 
     // Help text
@@ -186,6 +235,15 @@ rl.on('line', async (line) => {
             if (ids.length > 0) await deleteTasks(ids);
         } else if (cmd === '/refresh') {
             await fetchTasks();
+        } else if (cmd === '/todos') {
+            viewMode = 'pending';
+        } else if (cmd === '/learnings') {
+            viewMode = 'learnings';
+        } else if (cmd === '/learn') {
+            const content = parts.slice(1).join(' ').trim();
+            if (content) {
+                await addLearning(content);
+            }
         } else if (cmd === '/sort') {
             currentSort = currentSort === 'priority' ? 'newest' : 'priority';
         } else if (cmd === '/help') {
@@ -262,6 +320,7 @@ rl.on('line', async (line) => {
 // Start app
 async function init() {
     await fetchTasks();
+    await fetchLearnings();
     drawUI();
 }
 

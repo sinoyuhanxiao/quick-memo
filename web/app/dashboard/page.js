@@ -92,6 +92,9 @@ export default function Dashboard() {
             <option value="newest">Sort by Newest</option>
             <option value="priority">Sort by Priority (High to Low)</option>
           </select>
+          <Link href="/learning" style={{ color: 'var(--accent-color)', textDecoration: 'none', fontWeight: 'bold', marginRight: '1rem' }}>
+            🧠 Learning Zone
+          </Link>
           <Link href="/" style={{ color: 'var(--accent-color)', textDecoration: 'none', fontWeight: 'bold' }}>
             + New Idea
           </Link>
