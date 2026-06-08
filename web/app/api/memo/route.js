@@ -29,12 +29,25 @@ export async function POST(req) {
     // AI Processing if requested and OpenAI is configured
     if (useAI && openai) {
       try {
+        let categoryPrompt = `Choose a single word category (e.g. Work, Personal). If it doesn't fit any obvious category, output "Uncategorized".`;
+        if (process.env.POSTGRES_URL) {
+          try {
+            const { rows } = await sql`SELECT DISTINCT category FROM memos WHERE category IS NOT NULL AND category != 'Uncategorized'`;
+            const existingCategories = rows.map(r => r.category).filter(Boolean);
+            if (existingCategories.length > 0) {
+              categoryPrompt = `Choose EXACTLY ONE from this list of your existing categories: [${existingCategories.join(', ')}]. If the task does NOT fit any of these existing categories, output "Uncategorized".`;
+            }
+          } catch (e) {
+            console.error('Failed to fetch existing categories for AI prompt:', e);
+          }
+        }
+
         const aiRes = await openai.chat.completions.create({
-          model: 'gpt-4.1-nano',
+          model: 'gpt-4o-mini',
           messages: [
             { 
               role: 'system', 
-              content: 'You are an intelligent task assistant. Analyze the task and return a JSON object with three fields:\n1. "category": Choose EXACTLY ONE from [Work, Personal, Errands, Ideas, Finances].\n2. "priority": An integer from 1 (lowest) to 5 (highest) based on urgency.\n3. "content": The user\'s description, but grammatically corrected, simplified, and concise.\nOutput ONLY valid JSON. Do NOT wrap in markdown.' 
+              content: `You are an intelligent task assistant. Analyze the task and return a JSON object with three fields:\n1. "category": ${categoryPrompt}\n2. "priority": An integer from 1 (lowest) to 5 (highest) based on urgency.\n3. "content": The user's description, but grammatically corrected, simplified, and concise.\nOutput ONLY valid JSON. Do NOT wrap in markdown.` 
             },
             { role: 'user', content: processedText }
           ],
