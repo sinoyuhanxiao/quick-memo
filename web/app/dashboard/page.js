@@ -80,22 +80,22 @@ export default function Dashboard() {
   }, {});
 
   return (
-    <main className="container" style={{ maxWidth: '800px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1rem' }}>
+    <main className="container page-container-narrow">
+      <div className="dashboard-header">
         <h1>My Ideas Dashboard</h1>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div className="dashboard-controls">
           <select 
             value={sortBy} 
             onChange={(e) => setSortBy(e.target.value)}
-            style={{ padding: '0.4rem', borderRadius: '8px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', outline: 'none' }}
+            className="sort-select"
           >
             <option value="newest">Sort by Newest</option>
             <option value="priority">Sort by Priority (High to Low)</option>
           </select>
-          <Link href="/learning" style={{ color: 'var(--accent-color)', textDecoration: 'none', fontWeight: 'bold', marginRight: '1rem' }}>
+          <Link href="/learning" className="nav-link" style={{ marginRight: '1rem' }}>
             🧠 Learning Zone
           </Link>
-          <Link href="/" style={{ color: 'var(--accent-color)', textDecoration: 'none', fontWeight: 'bold' }}>
+          <Link href="/" className="nav-link">
             + New Idea
           </Link>
         </div>
@@ -119,7 +119,7 @@ export default function Dashboard() {
             <div key={cat} className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
               <h2 style={{ color: 'var(--accent-color)', marginBottom: '1rem' }}>{cat} <span style={{fontSize:'0.9rem', color:'var(--text-secondary)'}}>({activeItems.length})</span></h2>
               
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div className="todo-list">
                 {activeItems.map(item => (
                   <MemoRow 
                     key={item.id} item={item} 
@@ -136,7 +136,7 @@ export default function Dashboard() {
                 {completedItems.length > 0 && (
                   <div style={{ marginTop: '1rem', borderTop: '1px dashed var(--glass-border)', paddingTop: '1rem' }}>
                     <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Completed</h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div className="todo-list" style={{ gap: '0.5rem' }}>
                       {completedItems.map(item => (
                         <MemoRow 
                           key={item.id} item={item} 
@@ -159,23 +159,14 @@ export default function Dashboard() {
 
 function MemoRow({ item, toggleComplete, deleteMemo, startEdit, saveEdit, isEditing, editContent, setEditContent }) {
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'space-between', 
-      alignItems: 'center', 
-      padding: '0.8rem 1rem', 
-      background: 'rgba(255,255,255,0.3)', 
-      borderRadius: '12px', 
-      border: '1px solid var(--glass-border)',
-      opacity: item.is_completed ? 0.6 : 1,
-      transition: 'all 0.2s ease'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: 0 }}>
+  return (
+    <div className="todo-row" style={{ opacity: item.is_completed ? 0.6 : 1 }}>
+      <div className="todo-content-wrapper">
         <input 
           type="checkbox" 
           checked={item.is_completed} 
           onChange={toggleComplete}
-          style={{ transform: 'scale(1.2)', cursor: 'pointer', accentColor: 'var(--accent-color)' }}
+          className="todo-checkbox"
         />
         
         {isEditing ? (
@@ -186,53 +177,28 @@ function MemoRow({ item, toggleComplete, deleteMemo, startEdit, saveEdit, isEdit
             onKeyDown={e => { if (e.key === 'Enter') saveEdit(); }}
             onBlur={saveEdit}
             autoFocus
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              borderBottom: '1px solid var(--accent-color)',
-              color: 'var(--text-primary)',
-              fontSize: '1.1rem',
-              outline: 'none'
-            }}
+            className="todo-input"
           />
         ) : (
           <span 
             onClick={!item.is_completed ? startEdit : undefined}
+            className="todo-text"
             style={{ 
-              fontSize: '1.1rem', 
-              wordBreak: 'break-word', 
               textDecoration: item.is_completed ? 'line-through' : 'none',
-              cursor: item.is_completed ? 'default' : 'text',
-              flex: 1
+              cursor: item.is_completed ? 'default' : 'text'
             }}>
             {item.content}
           </span>
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginLeft: '1rem' }}>
-        <span style={{ 
-          padding: '0.2rem 0.6rem', 
-          borderRadius: '20px', 
-          fontSize: '0.8rem',
-          background: `var(--priority-${item.priority})`,
-          color: '#fff',
-          fontWeight: 'bold'
-        }}>
+      <div className="todo-actions">
+        <span className="todo-priority-badge" style={{ background: `var(--priority-${item.priority})` }}>
           P{item.priority}
         </span>
         <button 
           onClick={deleteMemo}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--priority-5)',
-            cursor: 'pointer',
-            fontSize: '1.2rem',
-            padding: '0 0.2rem',
-            opacity: 0.7
-          }}
+          className="todo-delete-btn"
           title="Delete"
         >
           🗑️

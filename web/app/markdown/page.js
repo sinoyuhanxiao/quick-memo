@@ -64,20 +64,21 @@ export default function MarkdownEditor() {
   };
 
   return (
-    <div style={{ padding: '2rem', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+  return (
+    <div className="page-container" style={{ padding: '0 4rem' }}>
       
       {/* Header section */}
-      <div style={{ width: '100%', maxWidth: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', padding: '0 4rem' }}>
+      <div className="page-header">
         <div>
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-            <Link href="/dashboard" style={{ textDecoration: 'none', color: 'var(--accent-color)', fontWeight: 'bold' }}>
+          <div className="nav-links" style={{ marginBottom: '1rem' }}>
+            <Link href="/dashboard" className="nav-link">
               ← Back to Dashboard
             </Link>
-            <Link href="/learning" style={{ textDecoration: 'none', color: 'var(--accent-color)', fontWeight: 'bold' }}>
+            <Link href="/learning" className="nav-link">
               🧠 Learning Zone
             </Link>
           </div>
-          <h1 style={{ fontSize: '2.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+          <h1 className="page-title">
             📝 Markdown Workspace
           </h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontWeight: 500 }}>

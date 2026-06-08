@@ -220,3 +220,37 @@ body {
 .md-preview blockquote { border-left: 4px solid var(--accent-color); padding-left: 1rem; color: var(--text-secondary); font-style: italic; margin-bottom: 1rem; }
 .md-preview a { color: var(--priority-1); text-decoration: none; }
 .md-preview a:hover { text-decoration: underline; }
+
+/* Structural & Shared Classes */
+.page-container { padding: 2rem; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+.page-container-narrow { max-width: 800px; margin: 0 auto; width: 100%; }
+.page-header { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; }
+.page-title { font-size: 2.5rem; margin: 0; display: flex; align-items: center; gap: 0.8rem; }
+.nav-links { display: flex; gap: 1rem; align-items: center; }
+.nav-link { color: var(--accent-color); text-decoration: none; font-weight: bold; }
+.nav-link-btn { text-decoration: none; background: transparent; color: var(--accent-color); border: 1px solid var(--accent-color); }
+
+/* Learning Zone Classes */
+.learning-input-form { display: flex; flex-direction: column; gap: 1rem; }
+.learning-textarea { padding: 1rem; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.5); color: var(--text-primary); min-height: 100px; resize: vertical; font-size: 1rem; outline: none; }
+.learning-list { display: flex; flex-direction: column; gap: 2rem; }
+.learning-date-group { padding: 1.5rem; }
+.learning-date-title { font-size: 1.2rem; color: var(--accent-color); border-bottom: 2px solid var(--glass-border); padding-bottom: 0.5rem; margin-bottom: 1rem; margin-top: 0; }
+.learning-items { display: flex; flex-direction: column; gap: 0.8rem; }
+.learning-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.8rem 1rem; background: rgba(255,255,255,0.3); border-radius: 8px; border: 1px solid var(--glass-border); }
+.learning-content { font-size: 1.05rem; line-height: 1.5; white-space: pre-wrap; }
+.learning-delete-btn { background: transparent; border: none; color: var(--priority-5); cursor: pointer; font-size: 1rem; opacity: 0.5; margin-left: 1rem; }
+
+/* Dashboard Classes */
+.dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; }
+.dashboard-controls { display: flex; gap: 1rem; align-items: center; }
+.sort-select { padding: 0.4rem; border-radius: 8px; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-primary); outline: none; }
+.todo-list { display: flex; flex-direction: column; gap: 1rem; }
+.todo-row { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: rgba(255,255,255,0.3); border-radius: 12px; border: 1px solid var(--glass-border); transition: all 0.2s ease; }
+.todo-content-wrapper { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
+.todo-checkbox { transform: scale(1.2); cursor: pointer; accent-color: var(--accent-color); }
+.todo-input { flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--accent-color); color: var(--text-primary); font-size: 1.1rem; outline: none; }
+.todo-text { font-size: 1.1rem; word-break: break-word; flex: 1; }
+.todo-actions { display: flex; align-items: center; gap: 0.8rem; margin-left: 1rem; }
+.todo-priority-badge { padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.8rem; color: #fff; font-weight: bold; }
+.todo-delete-btn { background: transparent; border: none; color: var(--priority-5); cursor: pointer; font-size: 1.2rem; padding: 0 0.2rem; opacity: 0.7; }
