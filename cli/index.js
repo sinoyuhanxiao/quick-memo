@@ -218,7 +218,7 @@ rl.on('line', async (line) => {
 
     const parts = input.split(' ');
     const cmd = parts[0].toLowerCase();
-    const localCommands = ['/exit', '/quit', '/done', '/undo', '/delete', '/rm', '/refresh', '/sort', '/edit', '/help', '/history'];
+    const localCommands = ['/exit', '/quit', '/done', '/undo', '/delete', '/rm', '/refresh', '/sort', '/edit', '/help', '/history', '/todos', '/learnings', '/learn'];
 
     if (localCommands.includes(cmd)) {
         if (cmd === '/exit' || cmd === '/quit') {
