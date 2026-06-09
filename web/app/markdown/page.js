@@ -2,6 +2,27 @@
 import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
+import mermaid from 'mermaid';
+
+const Mermaid = ({ chart }) => {
+  const ref = useRef(null);
+  
+  useEffect(() => {
+    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+    if (ref.current && chart) {
+      mermaid.render(`mermaid-${Math.random().toString(36).substr(2, 9)}`, chart)
+        .then(({ svg }) => {
+          if (ref.current) ref.current.innerHTML = svg;
+        })
+        .catch(err => {
+          console.error("Mermaid render error:", err);
+          if (ref.current) ref.current.innerHTML = `<div style="color: red; padding: 1rem; border: 1px solid red; border-radius: 8px;">Failed to render Mermaid chart</div>`;
+        });
+    }
+  }, [chart]);
+  
+  return <div ref={ref} className="mermaid-container" style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0', background: 'rgba(255,255,255,0.5)', padding: '1rem', borderRadius: '8px' }} />;
+};
 
 export default function MarkdownEditor() {
   const [content, setContent] = useState('');
@@ -149,7 +170,19 @@ export default function MarkdownEditor() {
               Live Preview
             </div>
             <div className="md-preview">
-              <ReactMarkdown>{content}</ReactMarkdown>
+              <ReactMarkdown
+                components={{
+                  code({ node, inline, className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || '');
+                    if (!inline && match && match[1] === 'mermaid') {
+                      return <Mermaid chart={String(children).replace(/\n$/, '')} />;
+                    }
+                    return <code className={className} style={{ background: 'rgba(0,0,0,0.05)', padding: '0.2rem 0.4rem', borderRadius: '4px' }} {...props}>{children}</code>;
+                  }
+                }}
+              >
+                {content}
+              </ReactMarkdown>
             </div>
           </div>
         )}
