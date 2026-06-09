@@ -61,12 +61,12 @@ async function fetchCategories() {
     } catch (e) {}
 }
 
-async function addTask(text, priority, category) {
+async function addTask(text, priority, categories) {
     try {
         await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, priority, category })
+            body: JSON.stringify({ text, priority, categories })
         });
         await fetchTasks();
     } catch (e) {}
@@ -83,13 +83,13 @@ async function addLearning(content) {
     } catch (e) {}
 }
 
-async function updateTask(id, is_completed, content, priority, category) {
+async function updateTask(id, is_completed, content, priority, categories) {
     try {
         const body = { id };
         if (is_completed !== undefined) body.is_completed = is_completed;
         if (content !== undefined) body.content = content;
         if (priority !== undefined) body.priority = priority;
-        if (category !== undefined) body.category = category;
+        if (categories !== undefined) body.categories = categories;
 
         await fetch(API_URL, {
             method: 'PUT',
@@ -224,7 +224,7 @@ function drawUI() {
         let displayTasks = viewMode === 'pending' ? tasks.filter(t => !t.is_completed) : tasks.filter(t => t.is_completed);
         
         if (filterCategory) {
-            displayTasks = displayTasks.filter(t => (t.category || 'Uncategorized').toLowerCase() === filterCategory.toLowerCase());
+            displayTasks = displayTasks.filter(t => t.categories && t.categories.some(c => c.toLowerCase() === filterCategory.toLowerCase()));
         }
 
         if (displayTasks.length === 0) {
@@ -255,7 +255,13 @@ function drawUI() {
                 else if (t.priority === 1) prioBadge = `${c.bgBlack}${c.blue}[P1 Low ]${c.reset}`;
                 else prioBadge = `${c.bgBlack}${c.magenta}[P3 Med ]${c.reset}`;
 
-                const catBadge = t.category && t.category !== 'Uncategorized' ? `${c.dim}[${t.category}]${c.reset}` : '';
+                let catBadge = '';
+                if (t.categories && t.categories.length > 0) {
+                    const validCats = t.categories.filter(c => c !== 'Uncategorized');
+                    if (validCats.length > 0) {
+                        catBadge = validCats.map(cat => `${c.dim}[${cat}]${c.reset}`).join(' ');
+                    }
+                }
                 const idStr = `${c.bold}${c.cyan}${t.id.toString().padStart(3, ' ')}.${c.reset}`;
                 
                 console.log(`  ${idStr} ${prioBadge} ${catBadge} ${c.white}${t.content}${c.reset}`);
@@ -422,20 +428,25 @@ rl.on('line', async (line) => {
                         newText = newText.replace(prioMatch[0], '').trim();
                     }
 
-                    const catMatch = newText.match(/#(\w+)/);
-                    if (catMatch) {
-                        newCategory = catMatch[1];
-                        newCategory = newCategory.charAt(0).toUpperCase() + newCategory.slice(1).toLowerCase();
-                        newText = newText.replace(catMatch[0], '').trim();
+                    let newCategories = [];
+                    const catMatches = [...newText.matchAll(/#(\w+)/g)];
+                    if (catMatches.length > 0) {
+                        catMatches.forEach(match => {
+                            const cat = match[1];
+                            newCategories.push(cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase());
+                            newText = newText.replace(match[0], '').trim();
+                        });
+                        newCategories = [...new Set(newCategories)];
                     }
 
-                    if (newText || newPriority !== undefined || newCategory !== undefined) {
-                        await updateTask(id, undefined, newText || undefined, newPriority, newCategory);
+                    if (newText || newPriority !== undefined || newCategories.length > 0) {
+                        await updateTask(id, undefined, newText || undefined, newPriority, newCategories.length > 0 ? newCategories : undefined);
                     } else {
                         const task = tasks.find(t => t.id === id);
                         if (task) {
                             drawUI();
-                            const catTag = task.category && task.category !== 'Uncategorized' ? ` #${task.category}` : '';
+                            const validCats = task.categories ? task.categories.filter(c => c !== 'Uncategorized') : [];
+                            const catTag = validCats.length > 0 ? ' ' + validCats.map(c => `#${c}`).join(' ') : '';
                             rl.write(`/edit ${id} ${task.content} !${task.priority}${catTag}`);
                             return;
                         }
@@ -449,7 +460,7 @@ rl.on('line', async (line) => {
 
     // Parse as a new task
     let priority = 3; // Default medium
-    let category = undefined;
+    let categories = [];
     let text = input;
 
     // Check for priority flag !1, !2, !3, !4, !5
@@ -459,18 +470,21 @@ rl.on('line', async (line) => {
         text = text.replace(prioMatch[0], '').trim();
     }
     
-    // Check for category tag #CategoryName
-    const catMatch = text.match(/#(\w+)/);
-    if (catMatch) {
-        category = catMatch[1];
-        category = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
-        text = text.replace(catMatch[0], '').trim();
+    // Check for multiple category tags #CategoryName
+    const catMatches = [...text.matchAll(/#(\w+)/g)];
+    if (catMatches.length > 0) {
+        catMatches.forEach(match => {
+            const cat = match[1];
+            categories.push(cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase());
+            text = text.replace(match[0], '').trim();
+        });
     } else if (filterCategory) {
-        category = filterCategory;
+        categories.push(filterCategory);
     }
+    categories = [...new Set(categories)];
 
     if (text) {
-        await addTask(text, priority, category);
+        await addTask(text, priority, categories);
     } drawUI();
 }).on('close', () => {
     console.log(`\n${c.green}Goodbye!${c.reset}\n`);

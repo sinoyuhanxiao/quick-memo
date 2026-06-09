@@ -9,13 +9,13 @@ const openai = process.env.OPENAI_API_KEY
 
 export async function POST(req) {
   try {
-    const { text, priority, category: manualCategory } = await req.json();
+    const { text, priority, categories: manualCategories } = await req.json();
     
     if (!text) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 });
     }
 
-    let category = manualCategory || 'Uncategorized';
+    let categories = Array.isArray(manualCategories) && manualCategories.length > 0 ? manualCategories : ['Uncategorized'];
     let processedText = text.trim();
     
     // Check if user explicitly wants AI categorization
@@ -29,13 +29,13 @@ export async function POST(req) {
     // AI Processing if requested and OpenAI is configured
     if (useAI && openai) {
       try {
-        let categoryPrompt = `Choose a single word category (e.g. Work, Personal). If it doesn't fit any obvious category, output "Uncategorized".`;
+        let categoryPrompt = `Choose 1 to 3 relevant single word categories (e.g. Work, Personal). If it doesn't fit any obvious category, output ["Uncategorized"]. Return an array of strings.`;
         if (process.env.POSTGRES_URL) {
           try {
-            const { rows } = await sql`SELECT DISTINCT category FROM memos WHERE category IS NOT NULL AND category != 'Uncategorized'`;
-            const existingCategories = rows.map(r => r.category).filter(Boolean);
+            const catRows = await sql`SELECT name FROM categories`;
+            const existingCategories = catRows.rows.map(r => r.name);
             if (existingCategories.length > 0) {
-              categoryPrompt = `Choose EXACTLY ONE from this list of your existing categories: [${existingCategories.join(', ')}]. If the task does NOT fit any of these existing categories, output "Uncategorized".`;
+              categoryPrompt = `Choose 1 to 3 relevant categories from this list of your existing categories: [${existingCategories.join(', ')}]. If the task does NOT fit any of these, output ["Uncategorized"]. Return an array of strings.`;
             }
           } catch (e) {
             console.error('Failed to fetch existing categories for AI prompt:', e);
@@ -47,7 +47,7 @@ export async function POST(req) {
           messages: [
             { 
               role: 'system', 
-              content: `You are an intelligent task assistant. Analyze the task and return a JSON object with three fields:\n1. "category": ${categoryPrompt}\n2. "priority": An integer from 1 (lowest) to 5 (highest) based on urgency.\n3. "content": The user's description, but grammatically corrected, simplified, and concise.\nOutput ONLY valid JSON. Do NOT wrap in markdown.` 
+              content: `You are an intelligent task assistant. Analyze the task and return a JSON object with three fields:\n1. "categories": ${categoryPrompt}\n2. "priority": An integer from 1 (lowest) to 5 (highest) based on urgency.\n3. "content": The user's description, but grammatically corrected, simplified, and concise.\nOutput ONLY valid JSON. Do NOT wrap in markdown.` 
             },
             { role: 'user', content: processedText }
           ],
@@ -57,7 +57,8 @@ export async function POST(req) {
         
         try {
             const aiData = JSON.parse(aiRes.choices[0].message.content.trim());
-            if (aiData.category) category = aiData.category;
+            if (Array.isArray(aiData.categories)) categories = aiData.categories;
+            else if (aiData.category) categories = [aiData.category];
             if (aiData.priority) finalPriority = aiData.priority;
             if (aiData.content) processedText = aiData.content;
         } catch (parseErr) {
@@ -68,18 +69,20 @@ export async function POST(req) {
       }
     }
 
+    const categoryString = categories.join(',');
+
     // Save to Postgres if configured
     if (process.env.POSTGRES_URL) {
       // NOTE: Ensure table 'memos' exists. Schema: id SERIAL PRIMARY KEY, content TEXT, priority INT, category TEXT, created_at TIMESTAMP DEFAULT NOW()
       await sql`
         INSERT INTO memos (content, priority, category) 
-        VALUES (${processedText}, ${finalPriority}, ${category})
+        VALUES (${processedText}, ${finalPriority}, ${categoryString})
       `;
     } else {
-      console.warn('POSTGRES_URL is not set. Skipping database insert.', { text, priority, category });
+      console.warn('POSTGRES_URL is not set. Skipping database insert.', { text, priority, categories });
     }
 
-    return NextResponse.json({ success: true, category });
+    return NextResponse.json({ success: true, categories });
   } catch (error) {
     console.error('Failed to create memo:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -105,7 +108,13 @@ export async function GET(req) {
       rows = result.rows;
     }
     
-    return NextResponse.json({ memos: rows });
+    // Map the comma-separated category string to an array for clients
+    const formattedRows = rows.map(r => ({
+      ...r,
+      categories: r.category ? r.category.split(',').map(c => c.trim()) : ['Uncategorized']
+    }));
+    
+    return NextResponse.json({ memos: formattedRows });
   } catch (error) {
     console.error('Failed to fetch memos:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -114,7 +123,7 @@ export async function GET(req) {
 
 export async function PUT(req) {
   try {
-    const { id, is_completed, content, priority, category } = await req.json();
+    const { id, is_completed, content, priority, categories } = await req.json();
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
 
     if (is_completed !== undefined) {
@@ -126,8 +135,9 @@ export async function PUT(req) {
     if (priority !== undefined) {
       await sql`UPDATE memos SET priority = ${priority} WHERE id = ${id}`;
     }
-    if (category !== undefined) {
-      await sql`UPDATE memos SET category = ${category} WHERE id = ${id}`;
+    if (categories !== undefined) {
+      const categoryString = categories.join(',');
+      await sql`UPDATE memos SET category = ${categoryString} WHERE id = ${id}`;
     }
 
     return NextResponse.json({ success: true });

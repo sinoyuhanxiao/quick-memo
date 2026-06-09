@@ -46,8 +46,12 @@ export async function PUT(req) {
     // 1. Rename in categories table
     await sql`UPDATE categories SET name = ${formattedNewName} WHERE name = ${formattedOldName}`;
     
-    // 2. Update all associated memos
-    await sql`UPDATE memos SET category = ${formattedNewName} WHERE category = ${formattedOldName}`;
+    // 2. Update all associated memos by replacing the value in the CSV string
+    await sql`
+      UPDATE memos 
+      SET category = array_to_string(array_replace(string_to_array(category, ','), ${formattedOldName}, ${formattedNewName}), ',')
+      WHERE ${formattedOldName} = ANY(string_to_array(category, ','))
+    `;
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -66,8 +70,12 @@ export async function DELETE(req) {
     // 1. Delete from categories table
     await sql`DELETE FROM categories WHERE name = ${formattedName}`;
 
-    // 2. Fallback all associated memos to 'Uncategorized'
-    await sql`UPDATE memos SET category = 'Uncategorized' WHERE category = ${formattedName}`;
+    // 2. Remove the category from the CSV string, and fallback to 'Uncategorized' if the resulting string is empty
+    await sql`
+      UPDATE memos 
+      SET category = COALESCE(NULLIF(array_to_string(array_remove(string_to_array(category, ','), ${formattedName}), ','), ''), 'Uncategorized')
+      WHERE ${formattedName} = ANY(string_to_array(category, ','))
+    `;
 
     return NextResponse.json({ success: true });
   } catch (error) {

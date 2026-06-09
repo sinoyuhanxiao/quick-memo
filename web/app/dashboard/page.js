@@ -79,9 +79,11 @@ export default function Dashboard() {
     });
 
   const grouped = processedMemos.reduce((acc, memo) => {
-    const cat = memo.category || 'Uncategorized';
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(memo);
+    const cats = memo.categories && memo.categories.length > 0 ? memo.categories : ['Uncategorized'];
+    cats.forEach(cat => {
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(memo);
+    });
     return acc;
   }, {});
 
@@ -222,8 +224,13 @@ function MemoRow({ item, toggleComplete, deleteMemo, startEdit, saveEdit, isEdit
         )}
       </div>
 
-      <div className="todo-actions">
-        <span className="todo-priority-badge" style={{ background: `var(--priority-${item.priority})` }}>
+      <div className="todo-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {item.categories && item.categories.filter(c => c !== 'Uncategorized').map(cat => (
+          <span key={cat} className="todo-category-badge" style={{ background: 'rgba(139, 115, 85, 0.1)', color: 'var(--text-secondary)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+            {cat}
+          </span>
+        ))}
+        <span className="todo-priority-badge" style={{ background: `var(--priority-${item.priority})`, padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem', color: 'white', fontWeight: 'bold' }}>
           P{item.priority}
         </span>
         <button 
