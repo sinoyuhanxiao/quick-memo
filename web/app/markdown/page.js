@@ -5,23 +5,92 @@ import Link from 'next/link';
 import mermaid from 'mermaid';
 
 const Mermaid = ({ chart }) => {
-  const ref = useRef(null);
+  const [svgContent, setSvgContent] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
   
   useEffect(() => {
     mermaid.initialize({ startOnLoad: false, theme: 'default' });
-    if (ref.current && chart) {
+    if (chart) {
       mermaid.render(`mermaid-${Math.random().toString(36).substr(2, 9)}`, chart)
         .then(({ svg }) => {
-          if (ref.current) ref.current.innerHTML = svg;
+          setSvgContent(svg);
         })
         .catch(err => {
           console.error("Mermaid render error:", err);
-          if (ref.current) ref.current.innerHTML = `<div style="color: red; padding: 1rem; border: 1px solid red; border-radius: 8px;">Failed to render Mermaid chart</div>`;
+          setSvgContent(`<div style="color: red; padding: 1rem; border: 1px solid red; border-radius: 8px;">Failed to render Mermaid chart</div>`);
         });
     }
   }, [chart]);
   
-  return <div ref={ref} className="mermaid-container" style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0', background: 'rgba(255,255,255,0.5)', padding: '1rem', borderRadius: '8px' }} />;
+  if (!svgContent) return <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Rendering chart...</div>;
+
+  return (
+    <>
+      <div 
+        onClick={() => setIsExpanded(true)}
+        title="Click to enlarge"
+        dangerouslySetInnerHTML={{ __html: svgContent }}
+        className="mermaid-container hover-scale"
+        style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          margin: '1rem 0', 
+          background: 'rgba(255,255,255,0.7)', 
+          padding: '1rem', 
+          borderRadius: '8px',
+          cursor: 'zoom-in',
+          maxHeight: '300px',
+          overflow: 'hidden',
+          border: '1px solid rgba(139, 115, 85, 0.2)',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.02)'
+        }} 
+      />
+      
+      {isExpanded && (
+        <div 
+          onClick={() => setIsExpanded(false)}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.8)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'zoom-out',
+            padding: '2rem',
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fcfaf8',
+              padding: '2rem',
+              borderRadius: '16px',
+              maxWidth: '95vw',
+              maxHeight: '95vh',
+              overflow: 'auto',
+              position: 'relative',
+              display: 'flex',
+              justifyContent: 'center',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+              border: '1px solid rgba(139, 115, 85, 0.2)'
+            }}
+          >
+            <button 
+              onClick={() => setIsExpanded(false)}
+              style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.05)', color: '#4a3f35', border: 'none', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 'bold' }}
+              title="Close"
+            >
+              ✕
+            </button>
+            <div dangerouslySetInnerHTML={{ __html: svgContent }} style={{ width: '100%', display: 'flex', justifyContent: 'center' }} />
+          </div>
+        </div>
+      )}
+    </>
+  );
 };
 
 export default function MarkdownEditor() {
