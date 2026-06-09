@@ -246,6 +246,15 @@ function drawUI() {
             const filterStr = filterCategory ? ` | Filter: ${filterCategory}` : '';
             console.log(`  ${c.bold}${title} (Sorted by: ${currentSort === 'priority' ? 'Priority' : 'Newest'}${filterStr}):${c.reset}\n`);
             
+            function getColorForCategory(cat) {
+                const colors = [c.red, c.green, c.yellow, c.blue, c.magenta, c.cyan];
+                let hash = 0;
+                for (let i = 0; i < cat.length; i++) {
+                    hash = cat.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                return colors[Math.abs(hash) % colors.length];
+            }
+
             displayTasks.forEach(t => {
                 let prioBadge = '';
                 if (t.priority === 5) prioBadge = `${c.bgBlack}${c.red}[P5 High]${c.reset}`;
@@ -259,7 +268,10 @@ function drawUI() {
                 if (t.categories && t.categories.length > 0) {
                     const validCats = t.categories.filter(c => c !== 'Uncategorized');
                     if (validCats.length > 0) {
-                        catBadge = validCats.map(cat => `${c.dim}[${cat}]${c.reset}`).join(' ');
+                        catBadge = validCats.map(cat => {
+                            const color = getColorForCategory(cat);
+                            return `${color}[${cat}]${c.reset}`;
+                        }).join(' ');
                     }
                 }
                 const idStr = `${c.bold}${c.cyan}${t.id.toString().padStart(3, ' ')}.${c.reset}`;
