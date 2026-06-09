@@ -489,7 +489,7 @@ rl.on('line', async (line) => {
 
     // Parse as a new task
     let priority = 3; // Default medium
-    let categories = [];
+    let inputCategories = [];
     let text = input;
 
     // Check for priority flag !1, !2, !3, !4, !5
@@ -504,16 +504,16 @@ rl.on('line', async (line) => {
     if (catMatches.length > 0) {
         catMatches.forEach(match => {
             const cat = match[1];
-            categories.push(cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase());
+            inputCategories.push(cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase());
             text = text.replace(match[0], '').trim();
         });
     } else if (filterCategory) {
-        categories.push(filterCategory);
+        inputCategories.push(filterCategory);
     }
-    categories = [...new Set(categories)];
+    inputCategories = [...new Set(inputCategories)];
 
     if (text) {
-        await addTask(text, priority, categories);
+        await addTask(text, priority, inputCategories);
     } drawUI();
 }).on('close', () => {
     console.log(`\n${c.green}Goodbye!${c.reset}\n`);
