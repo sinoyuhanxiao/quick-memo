@@ -57,7 +57,7 @@ async function fetchCategories() {
     try {
         const res = await fetch(CATEGORY_API_URL);
         const data = await res.json();
-        if (data.categories) categories = data.categories.map(c => c.name);
+        if (data.categories) categories = data.categories;
     } catch (e) {}
 }
 
@@ -148,6 +148,7 @@ const COMMAND_HINTS = [
     { cmd: '/categories create <n>', desc: 'Create an empty category' },
     { cmd: '/categories rename <o> <n>', desc: 'Rename a category (use quotes "Old" "New")' },
     { cmd: '/categories delete <n>', desc: 'Delete a category globally' },
+    { cmd: '/categories color <n> <c>', desc: 'Set color (red, green, yellow, blue, magenta, cyan)' },
     { cmd: '/search <keyword>', desc: 'Search across all Todos and Learnings' },
     { cmd: '/ai <text>', desc: 'Call AI to automatically categorize the memo' },
     { cmd: '/done <ids>', desc: 'Mark one or more tasks as completed' },
@@ -246,11 +247,17 @@ function drawUI() {
             const filterStr = filterCategory ? ` | Filter: ${filterCategory}` : '';
             console.log(`  ${c.bold}${title} (Sorted by: ${currentSort === 'priority' ? 'Priority' : 'Newest'}${filterStr}):${c.reset}\n`);
             
-            function getColorForCategory(cat) {
+            function getColorForCategory(catName) {
+                const catObj = categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+                if (catObj && catObj.color) {
+                    const colorMap = { red: c.red, green: c.green, yellow: c.yellow, blue: c.blue, magenta: c.magenta, cyan: c.cyan };
+                    if (colorMap[catObj.color.toLowerCase()]) return colorMap[catObj.color.toLowerCase()];
+                }
+                
                 const colors = [c.red, c.green, c.yellow, c.blue, c.magenta, c.cyan];
                 let hash = 0;
-                for (let i = 0; i < cat.length; i++) {
-                    hash = cat.charCodeAt(i) + ((hash << 5) - hash);
+                for (let i = 0; i < catName.length; i++) {
+                    hash = catName.charCodeAt(i) + ((hash << 5) - hash);
                 }
                 return colors[Math.abs(hash) % colors.length];
             }
@@ -381,10 +388,20 @@ rl.on('line', async (line) => {
                     await fetchCategories();
                     await fetchTasks();
                 }
+            } else if (action === 'color') {
+                const oldName = args[2];
+                const color = args[3];
+                if (oldName && color) {
+                    await fetch(CATEGORY_API_URL, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ oldName, color }) });
+                    await fetchCategories();
+                }
             }
 
             console.log(`\n  ${c.bold}EXISTING CATEGORIES:${c.reset}`);
-            categories.forEach(cat => console.log(`  ${c.dim}-${c.reset} ${c.white}${cat}${c.reset}`));
+            categories.forEach(catObj => {
+                const colorAnsi = getColorForCategory(catObj.name);
+                console.log(`  ${c.dim}-${c.reset} ${colorAnsi}[${catObj.name}]${c.reset}`);
+            });
             if (categories.length === 0) console.log(`  ${c.dim}No categories yet.${c.reset}`);
             console.log('');
             rl.prompt();

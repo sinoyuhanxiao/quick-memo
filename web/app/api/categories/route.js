@@ -17,14 +17,14 @@ export async function GET() {
 
 export async function POST(req) {
   try {
-    const { name } = await req.json();
+    const { name, color } = await req.json();
     if (!name) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
 
     const formattedName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 
     await sql`
-      INSERT INTO categories (name) 
-      VALUES (${formattedName})
+      INSERT INTO categories (name, color) 
+      VALUES (${formattedName}, ${color || null})
       ON CONFLICT DO NOTHING
     `;
 
@@ -37,21 +37,27 @@ export async function POST(req) {
 
 export async function PUT(req) {
   try {
-    const { oldName, newName } = await req.json();
-    if (!oldName || !newName) return NextResponse.json({ error: 'oldName and newName are required' }, { status: 400 });
+    const { oldName, newName, color } = await req.json();
+    if (!oldName) return NextResponse.json({ error: 'oldName is required' }, { status: 400 });
 
     const formattedOldName = oldName.charAt(0).toUpperCase() + oldName.slice(1).toLowerCase();
-    const formattedNewName = newName.charAt(0).toUpperCase() + newName.slice(1).toLowerCase();
+    const formattedNewName = newName ? newName.charAt(0).toUpperCase() + newName.slice(1).toLowerCase() : formattedOldName;
 
-    // 1. Rename in categories table
-    await sql`UPDATE categories SET name = ${formattedNewName} WHERE name = ${formattedOldName}`;
+    // 1. Rename in categories table and update color
+    if (color !== undefined) {
+      await sql`UPDATE categories SET name = ${formattedNewName}, color = ${color} WHERE name = ${formattedOldName}`;
+    } else {
+      await sql`UPDATE categories SET name = ${formattedNewName} WHERE name = ${formattedOldName}`;
+    }
     
-    // 2. Update all associated memos by replacing the value in the CSV string
-    await sql`
-      UPDATE memos 
-      SET category = array_to_string(array_replace(string_to_array(category, ','), ${formattedOldName}, ${formattedNewName}), ',')
-      WHERE ${formattedOldName} = ANY(string_to_array(category, ','))
-    `;
+    // 2. Update all associated memos by replacing the value in the CSV string (only if name changed)
+    if (formattedOldName !== formattedNewName) {
+      await sql`
+        UPDATE memos 
+        SET category = array_to_string(array_replace(string_to_array(category, ','), ${formattedOldName}, ${formattedNewName}), ',')
+        WHERE ${formattedOldName} = ANY(string_to_array(category, ','))
+      `;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

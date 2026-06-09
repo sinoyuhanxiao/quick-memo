@@ -11,6 +11,7 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState('');
+  const [showManageModal, setShowManageModal] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -28,7 +29,7 @@ export default function Dashboard() {
       fetch('/api/categories').then(res => res.json())
     ]).then(([memoData, catData]) => {
       if (memoData.memos) setMemos(memoData.memos);
-      if (catData.categories) setCategories(catData.categories.map(c => c.name));
+      if (catData.categories) setCategories(catData.categories);
       setLoading(false);
     });
   };
@@ -88,7 +89,7 @@ export default function Dashboard() {
   }, {});
 
   // Combine DB categories with any orphaned categories still in memos just in case
-  const uniqueCats = new Set([...categories, ...Object.keys(grouped)]);
+  const uniqueCats = new Set([...categories.map(c => c.name), ...Object.keys(grouped)]);
   const allCategories = ['All', ...Array.from(uniqueCats).sort()];
 
   return (
@@ -113,6 +114,13 @@ export default function Dashboard() {
               <option key={cat} value={cat}>{cat === 'All' ? 'All Categories' : cat}</option>
             ))}
           </select>
+          <button 
+            onClick={() => setShowManageModal(true)} 
+            className="nav-link" 
+            style={{ marginRight: '1rem', background: 'none', border: '1px solid var(--glass-border)', cursor: 'pointer' }}
+          >
+            ⚙️ Manage Tags
+          </button>
           <Link href="/learning" className="nav-link" style={{ marginRight: '1rem' }}>
             🧠 Learning Zone
           </Link>
@@ -163,6 +171,7 @@ export default function Dashboard() {
                     isEditing={editingId === item.id}
                     editContent={editContent}
                     setEditContent={setEditContent}
+                    categories={categories}
                   />
                 ))}
                 
@@ -176,6 +185,7 @@ export default function Dashboard() {
                           toggleComplete={() => toggleComplete(item)}
                           deleteMemo={() => deleteMemo(item.id)}
                           isEditing={false}
+                          categories={categories}
                         />
                       ))}
                     </div>
@@ -186,11 +196,104 @@ export default function Dashboard() {
           );
         })
       )}
+      
+      {showManageModal && (
+        <ManageCategoriesModal 
+          categories={categories} 
+          onClose={() => setShowManageModal(false)} 
+          onRefresh={fetchData} 
+        />
+      )}
     </main>
   );
 }
 
-function MemoRow({ item, toggleComplete, deleteMemo, startEdit, saveEdit, isEditing, editContent, setEditContent }) {
+function ManageCategoriesModal({ categories, onClose, onRefresh }) {
+  const [editingCat, setEditingCat] = useState(null);
+  const [editName, setEditName] = useState('');
+  
+  const colors = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan'];
+
+  const handleDelete = async (name) => {
+    if (!confirm(`Delete category "${name}"? Memos will become Uncategorized.`)) return;
+    await fetch('/api/categories', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    onRefresh();
+  };
+
+  const handleUpdate = async (oldName, newName, color) => {
+    await fetch('/api/categories', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldName, newName, color })
+    });
+    setEditingCat(null);
+    onRefresh();
+  };
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+      <div className="glass-panel" style={{ width: '400px', padding: '2rem', maxHeight: '80vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h2 style={{ color: 'var(--accent-color)', margin: 0 }}>Manage Tags</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>&times;</button>
+        </div>
+        
+        {categories.length === 0 ? <p>No categories yet.</p> : null}
+        
+        {categories.map(cat => (
+          <div key={cat.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--glass-border)' }}>
+            {editingCat === cat.name ? (
+              <div style={{ display: 'flex', gap: '0.5rem', flex: 1, alignItems: 'center' }}>
+                <input type="text" value={editName} onChange={e => setEditName(e.target.value)} style={{ flex: 1, padding: '0.3rem', borderRadius: '4px', border: '1px solid var(--glass-border)' }} />
+                <button onClick={() => handleUpdate(cat.name, editName, cat.color)} style={{ padding: '0.3rem 0.6rem', cursor: 'pointer', borderRadius: '4px', border: 'none', background: 'var(--accent-color)', color: 'white' }}>Save</button>
+                <button onClick={() => setEditingCat(null)} style={{ padding: '0.3rem 0.6rem', cursor: 'pointer', borderRadius: '4px', border: '1px solid var(--glass-border)', background: 'transparent' }}>Cancel</button>
+              </div>
+            ) : (
+              <>
+                <span style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{cat.name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <select 
+                    value={cat.color || ''} 
+                    onChange={e => handleUpdate(cat.name, cat.name, e.target.value)}
+                    style={{ padding: '0.2rem', borderRadius: '4px', border: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}
+                  >
+                    <option value="">Default</option>
+                    {colors.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <button onClick={() => { setEditingCat(cat.name); setEditName(cat.name); }} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>✏️</button>
+                  <button onClick={() => handleDelete(cat.name)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🗑️</button>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MemoRow({ item, toggleComplete, deleteMemo, startEdit, saveEdit, isEditing, editContent, setEditContent, categories }) {
+  const UI_COLORS = {
+    red: { bg: '#fee2e2', text: '#ef4444' },
+    green: { bg: '#d1fae5', text: '#10b981' },
+    yellow: { bg: '#fef3c7', text: '#f59e0b' },
+    blue: { bg: '#dbeafe', text: '#3b82f6' },
+    magenta: { bg: '#fae8ff', text: '#d946ef' },
+    cyan: { bg: '#cffafe', text: '#06b6d4' }
+  };
+
+  const getBadgeStyle = (catName) => {
+    const catObj = categories && categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+    if (catObj && catObj.color && UI_COLORS[catObj.color.toLowerCase()]) {
+      return { background: UI_COLORS[catObj.color.toLowerCase()].bg, color: UI_COLORS[catObj.color.toLowerCase()].text };
+    }
+    return { background: 'rgba(139, 115, 85, 0.1)', color: 'var(--text-secondary)' };
+  };
+
   return (
     <div className="todo-row" style={{ opacity: item.is_completed ? 0.6 : 1 }}>
       <div className="todo-content-wrapper">
@@ -226,7 +329,7 @@ function MemoRow({ item, toggleComplete, deleteMemo, startEdit, saveEdit, isEdit
 
       <div className="todo-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         {item.categories && item.categories.filter(c => c !== 'Uncategorized').map(cat => (
-          <span key={cat} className="todo-category-badge" style={{ background: 'rgba(139, 115, 85, 0.1)', color: 'var(--text-secondary)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+          <span key={cat} className="todo-category-badge" style={{ ...getBadgeStyle(cat), padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
             {cat}
           </span>
         ))}
