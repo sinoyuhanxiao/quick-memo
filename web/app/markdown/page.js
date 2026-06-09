@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
 import mermaid from 'mermaid';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 const Mermaid = ({ chart }) => {
   const [svgContent, setSvgContent] = useState('');
@@ -66,26 +67,38 @@ const Mermaid = ({ chart }) => {
             onClick={(e) => e.stopPropagation()}
             style={{
               background: '#fcfaf8',
-              padding: '2rem',
               borderRadius: '16px',
-              maxWidth: '95vw',
-              maxHeight: '95vh',
-              overflow: 'auto',
+              width: '95vw',
+              height: '95vh',
+              overflow: 'hidden',
               position: 'relative',
               display: 'flex',
-              justifyContent: 'center',
+              flexDirection: 'column',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
               border: '1px solid rgba(139, 115, 85, 0.2)'
             }}
           >
             <button 
               onClick={() => setIsExpanded(false)}
-              style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.05)', color: '#4a3f35', border: 'none', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 'bold' }}
+              style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.05)', color: '#4a3f35', border: 'none', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 'bold', zIndex: 10000 }}
               title="Close"
             >
               ✕
             </button>
-            <div dangerouslySetInnerHTML={{ __html: svgContent }} style={{ width: '100%', display: 'flex', justifyContent: 'center' }} />
+            <TransformWrapper initialScale={1} minScale={0.1} maxScale={8} centerOnInit>
+              {({ zoomIn, zoomOut, resetTransform }) => (
+                <>
+                  <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '10px', zIndex: 10000, background: 'rgba(255,255,255,0.8)', padding: '10px', borderRadius: '12px', backdropFilter: 'blur(4px)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                    <button onClick={() => zoomIn()} style={{ padding: '8px 16px', background: 'var(--accent-color)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Zoom In ➕</button>
+                    <button onClick={() => zoomOut()} style={{ padding: '8px 16px', background: 'var(--accent-color)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Zoom Out ➖</button>
+                    <button onClick={() => resetTransform()} style={{ padding: '8px 16px', background: 'transparent', color: '#4a3f35', border: '1px solid var(--accent-color)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Reset ↺</button>
+                  </div>
+                  <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }} contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab' }}>
+                    <div dangerouslySetInnerHTML={{ __html: svgContent }} style={{ padding: '2rem' }} />
+                  </TransformComponent>
+                </>
+              )}
+            </TransformWrapper>
           </div>
         </div>
       )}
