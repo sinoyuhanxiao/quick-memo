@@ -137,6 +137,21 @@ async function updateLearning(id, content) {
     } catch (e) {}
 }
 
+function getColorForCategory(catName) {
+    const catObj = categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+    if (catObj && catObj.color) {
+        const colorMap = { red: c.red, green: c.green, yellow: c.yellow, blue: c.blue, magenta: c.magenta, cyan: c.cyan };
+        if (colorMap[catObj.color.toLowerCase()]) return colorMap[catObj.color.toLowerCase()];
+    }
+    
+    const colors = [c.red, c.green, c.yellow, c.blue, c.magenta, c.cyan];
+    let hash = 0;
+    for (let i = 0; i < catName.length; i++) {
+        hash = catName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+}
+
 // Command Hints
 const COMMAND_HINTS = [
     { cmd: '/learn <text>', desc: 'Record a new learning for today' },
@@ -247,21 +262,6 @@ function drawUI() {
             const filterStr = filterCategory ? ` | Filter: ${filterCategory}` : '';
             console.log(`  ${c.bold}${title} (Sorted by: ${currentSort === 'priority' ? 'Priority' : 'Newest'}${filterStr}):${c.reset}\n`);
             
-            function getColorForCategory(catName) {
-                const catObj = categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
-                if (catObj && catObj.color) {
-                    const colorMap = { red: c.red, green: c.green, yellow: c.yellow, blue: c.blue, magenta: c.magenta, cyan: c.cyan };
-                    if (colorMap[catObj.color.toLowerCase()]) return colorMap[catObj.color.toLowerCase()];
-                }
-                
-                const colors = [c.red, c.green, c.yellow, c.blue, c.magenta, c.cyan];
-                let hash = 0;
-                for (let i = 0; i < catName.length; i++) {
-                    hash = catName.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                return colors[Math.abs(hash) % colors.length];
-            }
-
             displayTasks.forEach(t => {
                 let prioBadge = '';
                 if (t.priority === 5) prioBadge = `${c.bgBlack}${c.red}[P5 High]${c.reset}`;
