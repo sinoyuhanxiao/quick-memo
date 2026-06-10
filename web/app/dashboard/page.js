@@ -152,12 +152,12 @@ export default function Dashboard() {
       ) : (
         Object.entries(grouped)
           .filter(([cat]) => filterCategory === 'All' || cat === filterCategory)
-          .map(([cat, items]) => {
+          .map(([cat, items], index) => {
           const activeItems = items.filter(i => !i.is_completed);
           const completedItems = items.filter(i => i.is_completed);
           
           return (
-            <div key={cat} className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
+            <div key={cat} className="glass-panel animate-in" style={{ padding: '1.5rem', marginBottom: '1.5rem', animationDelay: `${index * 0.1}s` }}>
               <h2 style={{ color: 'var(--accent-color)', marginBottom: '1rem' }}>{cat} <span style={{fontSize:'0.9rem', color:'var(--text-secondary)'}}>({activeItems.length})</span></h2>
               
               <div className="todo-list">

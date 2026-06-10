@@ -68,7 +68,7 @@ export default function Home() {
 
   return (
     <main className="container">
-      <div className="glass-panel">
+      <div className="glass-panel animate-in">
         <textarea
           ref={inputRef}
           className="memo-input"
