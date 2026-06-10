@@ -23,10 +23,22 @@ export default function Home() {
     setStatus({ type: '', msg: '' });
 
     try {
+      let categories = [];
+      let processedText = text;
+      const catMatches = [...processedText.matchAll(/#(\w+)/g)];
+      if (catMatches.length > 0) {
+        catMatches.forEach(match => {
+          const cat = match[1];
+          categories.push(cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase());
+          processedText = processedText.replace(match[0], '').trim();
+        });
+        categories = [...new Set(categories)];
+      }
+
       const res = await fetch('/api/memo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, priority }),
+        body: JSON.stringify({ text: processedText, priority, categories: categories.length > 0 ? categories : undefined }),
       });
 
       if (!res.ok) throw new Error('Failed to save');
