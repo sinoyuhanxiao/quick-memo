@@ -93,7 +93,7 @@ export default function Dashboard() {
   const allCategories = ['All', ...Array.from(uniqueCats).sort()];
 
   return (
-    <main className="container page-container-narrow">
+    <main className="kanban-wrapper">
       <div className="dashboard-header">
         <h1>My Ideas Dashboard</h1>
         <div className="dashboard-controls">
@@ -150,15 +150,16 @@ export default function Dashboard() {
           </Link>
         </div>
       ) : (
-        Object.entries(grouped)
-          .filter(([cat]) => filterCategory === 'All' || cat === filterCategory)
-          .map(([cat, items], index) => {
-          const activeItems = items.filter(i => !i.is_completed);
-          const completedItems = items.filter(i => i.is_completed);
+        <div className="kanban-container">
+          {Object.entries(grouped)
+            .filter(([cat]) => filterCategory === 'All' || cat === filterCategory)
+            .map(([cat, items], index) => {
+            const activeItems = items.filter(i => !i.is_completed);
+            const completedItems = items.filter(i => i.is_completed);
           
-          return (
-            <div key={cat} className="glass-panel animate-in" style={{ padding: '1.5rem', marginBottom: '1.5rem', animationDelay: `${index * 0.1}s` }}>
-              <h2 style={{ color: 'var(--accent-color)', marginBottom: '1rem' }}>{cat} <span style={{fontSize:'0.9rem', color:'var(--text-secondary)'}}>({activeItems.length})</span></h2>
+            return (
+              <div key={cat} className="glass-panel kanban-column animate-in" style={{ padding: '1.5rem', marginBottom: '1.5rem', animationDelay: `${index * 0.1}s` }}>
+                <h2 style={{ color: 'var(--accent-color)', marginBottom: '1rem' }}>{cat} <span style={{fontSize:'0.9rem', color:'var(--text-secondary)'}}>({activeItems.length})</span></h2>
               
               <div className="todo-list">
                 {activeItems.map(item => (
@@ -192,9 +193,10 @@ export default function Dashboard() {
                   </div>
                 )}
               </div>
-            </div>
-          );
-        })
+              </div>
+            );
+          })}
+        </div>
       )}
       
       {showManageModal && (
