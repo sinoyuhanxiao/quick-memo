@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 
+let tableEnsured = false;
+
 // Ensure the table exists
 async function ensureTableExists() {
+  if (tableEnsured) return;
   if (process.env.POSTGRES_URL) {
     await sql`
       CREATE TABLE IF NOT EXISTS learnings (
@@ -12,6 +15,7 @@ async function ensureTableExists() {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `;
+    tableEnsured = true;
   }
 }
 
