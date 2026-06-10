@@ -264,8 +264,8 @@ body::before {
   flex-wrap: nowrap;
 }
 .kanban-column {
-  min-width: 420px;
-  max-width: 420px;
+  min-width: 480px;
+  max-width: 480px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -283,7 +283,7 @@ body::before {
   display: flex; 
   justify-content: space-between; 
   align-items: center; 
-  padding: 1.2rem 1.5rem; 
+  padding: 1rem 1.2rem; 
   background: rgba(255, 255, 255, 0.4); 
   border-radius: 16px; 
   border: 1px solid rgba(255,255,255,0.8); 
@@ -295,9 +295,9 @@ body::before {
   background: rgba(255, 255, 255, 0.6);
   box-shadow: 0 8px 25px rgba(139, 115, 85, 0.08);
 }
-.todo-content-wrapper { display: flex; align-items: center; gap: 1.2rem; flex: 1; min-width: 0; }
-.todo-input { flex: 1; background: transparent; border: none; border-bottom: 2px solid var(--accent-color); color: var(--text-primary); font-size: 1.15rem; outline: none; font-family: inherit; padding-bottom: 0.2rem;}
-.todo-text { font-size: 1.15rem; word-break: break-word; flex: 1; font-weight: 500;}
+.todo-content-wrapper { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
+.todo-input { flex: 1; background: transparent; border: none; border-bottom: 2px solid var(--accent-color); color: var(--text-primary); font-size: 1.05rem; outline: none; font-family: inherit; padding-bottom: 0.2rem;}
+.todo-text { font-size: 1.05rem; word-break: break-word; flex: 1; font-weight: 500;}
 .todo-actions { display: flex; align-items: center; gap: 0.8rem; margin-left: 1.5rem; }
 .todo-priority-badge { padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; color: #fff; font-weight: 700; letter-spacing: 0.02em; }
 .todo-delete-btn { background: transparent; border: none; color: var(--priority-5); cursor: pointer; font-size: 1.3rem; padding: 0.3rem; opacity: 0.6; border-radius: 8px; transition: all 0.2s;}
