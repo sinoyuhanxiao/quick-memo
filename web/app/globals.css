@@ -273,6 +273,22 @@ body::before {
   overflow-y: auto;
 }
 
+@media (max-width: 768px) {
+  .kanban-wrapper {
+    padding: 1.5rem 1rem;
+  }
+  .kanban-container {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+  .kanban-column {
+    min-width: 100%;
+    max-width: 100%;
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
 /* Dashboard List Components */
 .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(139, 115, 85, 0.15); padding-bottom: 1.5rem; }
 .dashboard-controls { display: flex; gap: 1rem; align-items: center; }
