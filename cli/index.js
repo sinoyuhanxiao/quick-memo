@@ -1,4 +1,39 @@
 import readline from 'readline';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Auto-load environment variables from the web project
+try {
+  const envPath = path.resolve(__dirname, '../web/.env.local');
+  if (fs.existsSync(envPath)) {
+    const envFile = fs.readFileSync(envPath, 'utf8');
+    envFile.split('\n').forEach(line => {
+      const match = line.match(/^([^=]+)=(.*)$/);
+      if (match) {
+        const key = match[1].trim();
+        let val = match[2].trim();
+        if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+        if (!process.env[key]) process.env[key] = val;
+      }
+    });
+  }
+} catch(e) {}
+
+// Intercept all API calls to automatically inject the Master Password
+const _fetch = global.fetch;
+global.fetch = async (url, options = {}) => {
+    if (process.env.APP_PASSWORD) {
+        options.headers = {
+            ...options.headers,
+            'x-app-password': process.env.APP_PASSWORD
+        };
+    }
+    return _fetch(url, options);
+};
 
 const API_URL = 'http://localhost:3000/api/memo';
 const LEARNING_API_URL = 'http://localhost:3000/api/learning';
