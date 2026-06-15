@@ -11,9 +11,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport = {
+  themeColor: '#c19a6b',
+};
+
 export const metadata = {
   title: "Quick Memo Dashboard",
   description: "Capture and organize ideas instantly.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "QuickMemo",
+  },
+  icons: {
+    apple: "/icon-192x192.png",
+  },
 };
 
 export default function RootLayout({ children }) {

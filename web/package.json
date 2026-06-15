@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@vercel/postgres": "^0.10.0",
     "dotenv": "^17.4.2",
     "mermaid": "^11.15.0",
