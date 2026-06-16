@@ -307,7 +307,7 @@ function drawUI() {
                         }
                     }
                     const idStr = `${c.bold}${c.cyan}${t.id.toString().padStart(3, ' ')}.${c.reset}`;
-                    console.log(`    ${idStr} ${catBadge} ${c.dim}${c.italic}${t.content}${c.reset}`);
+                    console.log(`    ${idStr} ${catBadge} ${c.white}${c.italic}${t.content}${c.reset}`);
                 });
                 console.log('');
             });
