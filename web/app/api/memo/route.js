@@ -9,7 +9,7 @@ const openai = process.env.OPENAI_API_KEY
 
 export async function POST(req) {
   try {
-    const { text, priority, categories: manualCategories } = await req.json();
+    const { text, priority, categories: manualCategories, is_completed } = await req.json();
     
     if (!text) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 });
@@ -73,11 +73,17 @@ export async function POST(req) {
 
     // Save to Postgres if configured
     if (process.env.POSTGRES_URL) {
-      // NOTE: Ensure table 'memos' exists. Schema: id SERIAL PRIMARY KEY, content TEXT, priority INT, category TEXT, created_at TIMESTAMP DEFAULT NOW()
-      await sql`
-        INSERT INTO memos (content, priority, category) 
-        VALUES (${processedText}, ${finalPriority}, ${categoryString})
-      `;
+      if (is_completed) {
+        await sql`
+          INSERT INTO memos (content, priority, category, is_completed, completed_at) 
+          VALUES (${processedText}, ${finalPriority}, ${categoryString}, true, CURRENT_TIMESTAMP)
+        `;
+      } else {
+        await sql`
+          INSERT INTO memos (content, priority, category) 
+          VALUES (${processedText}, ${finalPriority}, ${categoryString})
+        `;
+      }
     } else {
       console.warn('POSTGRES_URL is not set. Skipping database insert.', { text, priority, categories });
     }
@@ -109,10 +115,18 @@ export async function GET(req) {
     }
     
     // Map the comma-separated category string to an array for clients
-    const formattedRows = rows.map(r => ({
-      ...r,
-      categories: r.category ? r.category.split(',').map(c => c.trim()) : ['Uncategorized']
-    }));
+    const formattedRows = rows.map(r => {
+      let dateCategory = 'Unknown';
+      if (r.completed_at) {
+        const d = new Date(r.completed_at);
+        dateCategory = d.toISOString().split('T')[0];
+      }
+      return {
+        ...r,
+        categories: r.category ? r.category.split(',').map(c => c.trim()) : ['Uncategorized'],
+        date_category: dateCategory
+      };
+    });
     
     return NextResponse.json({ memos: formattedRows });
   } catch (error) {
@@ -127,7 +141,11 @@ export async function PUT(req) {
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
 
     if (is_completed !== undefined) {
-      await sql`UPDATE memos SET is_completed = ${is_completed} WHERE id = ${id}`;
+      if (is_completed) {
+        await sql`UPDATE memos SET is_completed = true, completed_at = CURRENT_TIMESTAMP WHERE id = ${id}`;
+      } else {
+        await sql`UPDATE memos SET is_completed = false, completed_at = NULL WHERE id = ${id}`;
+      }
     }
     if (content !== undefined) {
       await sql`UPDATE memos SET content = ${content} WHERE id = ${id}`;

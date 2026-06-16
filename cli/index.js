@@ -96,12 +96,12 @@ async function fetchCategories() {
     } catch (e) {}
 }
 
-async function addTask(text, priority, categories) {
+async function addTask(text, priority, categories, is_completed = false) {
     try {
         await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, priority, categories })
+            body: JSON.stringify({ text, priority, categories, is_completed })
         });
         await fetchTasks();
     } catch (e) {}
@@ -286,6 +286,31 @@ function drawUI() {
             } else {
                 console.log(`  ${c.dim}${c.italic}No completed tasks yet.${c.reset}\n`);
             }
+        } else if (viewMode === 'completed') {
+            console.log(`  ${c.bold}COMPLETED TASKS (Grouped by Date)${filterCategory ? ' | Filter: ' + filterCategory : ''}${c.reset}\n`);
+            
+            const grouped = displayTasks.reduce((acc, curr) => {
+                const date = curr.date_category || 'Unknown';
+                if (!acc[date]) acc[date] = [];
+                acc[date].push(curr);
+                return acc;
+            }, {});
+            
+            Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a)).forEach(date => {
+                console.log(`  ${c.bold}${c.magenta}✅ ${date}${c.reset}`);
+                grouped[date].forEach(t => {
+                    let catBadge = '';
+                    if (t.categories && t.categories.length > 0) {
+                        const validCats = t.categories.filter(c => c !== 'Uncategorized');
+                        if (validCats.length > 0) {
+                            catBadge = validCats.map(cat => `${getColorForCategory(cat)}[${cat}]${c.reset}`).join(' ');
+                        }
+                    }
+                    const idStr = `${c.bold}${c.cyan}${t.id.toString().padStart(3, ' ')}.${c.reset}`;
+                    console.log(`    ${idStr} ${catBadge} ${c.dim}${c.italic}${t.content}${c.reset}`);
+                });
+                console.log('');
+            });
         } else {
             if (currentSort === 'priority') {
                 displayTasks.sort((a, b) => b.priority - a.priority);
@@ -322,7 +347,6 @@ function drawUI() {
             });
             console.log('');
         }
-    }
 
     // Help text
     console.log(`${c.dim}──────────────────────────────────────────────────────────────────${c.reset}`);
@@ -365,7 +389,11 @@ rl.on('line', async (line) => {
             process.exit(0);
         } else if (cmd === '/done') {
             const ids = args.slice(1).map(p => parseInt(p.replace(/,/g, ''))).filter(id => !isNaN(id));
-            for (const id of ids) await updateTask(id, true);
+            if (ids.length > 0) {
+                for (const id of ids) await updateTask(id, true);
+            } else {
+                viewMode = 'completed'; // Directly view done list if no args
+            }
         } else if (cmd === '/undo') {
             const ids = args.slice(1).map(p => parseInt(p.replace(/,/g, ''))).filter(id => !isNaN(id));
             for (const id of ids) await updateTask(id, false);
@@ -548,7 +576,7 @@ rl.on('line', async (line) => {
     inputCategories = [...new Set(inputCategories)];
 
     if (text) {
-        await addTask(text, priority, inputCategories);
+        await addTask(text, priority, inputCategories, viewMode === 'completed');
     } drawUI();
 }).on('close', () => {
     console.log(`\n${c.green}Goodbye!${c.reset}\n`);
