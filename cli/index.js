@@ -347,6 +347,7 @@ function drawUI() {
             });
             console.log('');
         }
+    }
 
     // Help text
     console.log(`${c.dim}──────────────────────────────────────────────────────────────────${c.reset}`);
