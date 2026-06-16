@@ -110,7 +110,6 @@ export default function MarkdownEditor() {
   const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
-  const [viewMode, setViewMode] = useState('edit'); // 'edit' or 'preview'
   const saveTimeoutRef = useRef(null);
   const isSavingRef = useRef(false);
 
@@ -208,21 +207,7 @@ export default function MarkdownEditor() {
             ✉️ Email Draft
           </button>
 
-          {/* Toggle Switch */}
-          <div style={{ display: 'flex', background: 'rgba(0,0,0,0.05)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-            <button 
-              onClick={() => setViewMode('edit')}
-              style={{ padding: '0.6rem 1.5rem', background: viewMode === 'edit' ? 'var(--accent-color)' : 'transparent', color: viewMode === 'edit' ? 'white' : 'var(--text-secondary)', border: 'none', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
-            >
-              Raw Edit
-            </button>
-            <button 
-              onClick={() => setViewMode('preview')}
-              style={{ padding: '0.6rem 1.5rem', background: viewMode === 'preview' ? 'var(--accent-color)' : 'transparent', color: viewMode === 'preview' ? 'white' : 'var(--text-secondary)', border: 'none', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
-            >
-              Live Preview
-            </button>
-          </div>
+          {/* Side-by-side mode active */}
 
           <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 'bold', minWidth: '150px', textAlign: 'right' }}>
             {isSaving ? '⏳ Saving...' : lastSaved ? `✅ Saved at ${lastSaved}` : '✅ Synchronized'}
@@ -230,44 +215,42 @@ export default function MarkdownEditor() {
         </div>
       </div>
 
-      {/* Unified Editor / Preview Pane */}
+      {/* Side-by-Side Editor & Preview Pane */}
       <div className="md-split-pane">
         
-        {viewMode === 'edit' ? (
-          <div className="glass-panel md-pane" style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
-            <div className="md-pane-header">
-              Raw Markdown
-            </div>
-            <textarea
-              className="md-textarea"
-              value={content}
-              onChange={handleChange}
-              placeholder="Start typing your markdown here..."
-              spellCheck={false}
-            />
+        <div className="glass-panel md-pane" style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
+          <div className="md-pane-header">
+            Raw Markdown
           </div>
-        ) : (
-          <div className="glass-panel md-pane" style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
-            <div className="md-pane-header">
-              Live Preview
-            </div>
-            <div className="md-preview">
-              <ReactMarkdown
-                components={{
-                  code({ node, inline, className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    if (!inline && match && match[1] === 'mermaid') {
-                      return <Mermaid chart={String(children).replace(/\n$/, '')} />;
-                    }
-                    return <code className={className} style={{ background: 'rgba(0,0,0,0.05)', padding: '0.2rem 0.4rem', borderRadius: '4px' }} {...props}>{children}</code>;
+          <textarea
+            className="md-textarea"
+            value={content}
+            onChange={handleChange}
+            placeholder="Start typing your markdown here..."
+            spellCheck={false}
+          />
+        </div>
+
+        <div className="glass-panel md-pane" style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
+          <div className="md-pane-header">
+            Live Preview
+          </div>
+          <div className="md-preview">
+            <ReactMarkdown
+              components={{
+                code({ node, inline, className, children, ...props }) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  if (!inline && match && match[1] === 'mermaid') {
+                    return <Mermaid chart={String(children).replace(/\n$/, '')} />;
                   }
-                }}
-              >
-                {content}
-              </ReactMarkdown>
-            </div>
+                  return <code className={className} style={{ background: 'rgba(0,0,0,0.05)', padding: '0.2rem 0.4rem', borderRadius: '4px' }} {...props}>{children}</code>;
+                }
+              }}
+            >
+              {content}
+            </ReactMarkdown>
           </div>
-        )}
+        </div>
 
       </div>
     </div>
