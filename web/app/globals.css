@@ -375,7 +375,201 @@ body::before {
 ::-webkit-scrollbar-thumb { background: rgba(139, 115, 85, 0.2); border-radius: 10px; border: 2px solid var(--bg-color); }
 ::-webkit-scrollbar-thumb:hover { background: rgba(139, 115, 85, 0.4); }
 
-/* iOS Reminders Clone (/mobile) */
+/* Minimal Custom Mobile App (/mobile) */
+.min-app-bg { 
+  background-color: #ffffff; 
+  min-height: 100vh; 
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+  color: #111; 
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top Navigation */
+.min-top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px 5px 20px;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.min-nav-icon { color: #888; font-size: 20px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;}
+.min-nav-title { font-size: 18px; font-weight: 700; color: #111; text-align: center; flex: 1;}
+
+/* Content Area */
+.min-content {
+  flex: 1;
+  padding-bottom: 140px; /* Space for add form + bottom nav */
+  overflow-y: auto;
+}
+
+/* Group Headers */
+.min-group-header {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+  margin: 25px 20px 10px 20px;
+}
+
+/* Task Row */
+.min-task-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  transition: opacity 0.2s;
+}
+.min-task-row.completed {
+  opacity: 0.4;
+}
+
+/* Checkbox */
+.min-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid #bbb;
+  margin-right: 15px;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+  background: transparent;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.min-checkbox:checked {
+  background: #bbb;
+  border-color: #bbb;
+}
+/* The checkmark for checked state */
+.min-checkbox:checked::after {
+  content: '';
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-bottom: 2px;
+}
+
+/* Task Text */
+.min-task-text {
+  font-size: 16px;
+  color: #333;
+  flex: 1;
+  font-weight: 500;
+  word-break: break-word;
+}
+.min-task-row.completed .min-task-text {
+  text-decoration: line-through;
+  color: #999;
+}
+
+/* Delete Button */
+.min-delete-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #888;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border: none;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+/* Sticky Bottom Input Area */
+.min-add-area {
+  position: fixed;
+  bottom: 60px; /* Above the tab nav */
+  left: 0;
+  width: 100%;
+  padding: 10px 20px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 100;
+}
+.min-input-wrapper {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 20px;
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+}
+.min-add-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  color: #333;
+  outline: none;
+}
+.min-add-input::placeholder { color: #ccc; }
+.min-add-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #3498db; /* bright blue */
+  color: white;
+  border: none;
+  font-size: 24px;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+}
+
+/* Bottom Tab Navigation */
+.min-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 110;
+}
+.min-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #aaa;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.min-tab.active { color: #333; }
+.min-tab-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.min-tab.active .min-tab-icon { background: #333; color: white; }
+
 .ios-bg { 
   background-color: #f2f2f7; 
   min-height: 100vh; 

@@ -2,16 +2,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-export default function IosRemindersApp() {
+export default function MinimalMobileApp() {
   const [memos, setMemos] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Navigation State
-  const [currentScreen, setCurrentScreen] = useState('home'); // 'home' | 'list'
-  const [activeList, setActiveList] = useState(null); 
-  
-  const [showAddForm, setShowAddForm] = useState(false);
   const [newMemo, setNewMemo] = useState('');
 
   useEffect(() => {
@@ -28,7 +21,6 @@ export default function IosRemindersApp() {
     ]).then(([memoData, catData]) => {
       if (memoData.memos) setMemos(memoData.memos);
       if (catData.categories) setCategories(catData.categories);
-      setLoading(false);
     });
   };
 
@@ -36,13 +28,10 @@ export default function IosRemindersApp() {
     e.preventDefault();
     if (!newMemo.trim()) return;
     
-    const isCustomCat = activeList && activeList !== 'All' && activeList !== 'Completed';
-    const content = isCustomCat ? `${newMemo} #${activeList}` : newMemo;
-    
+    const content = newMemo;
     const tempId = Date.now();
     setMemos(prev => [{ id: tempId, content, priority: 3, is_completed: false, created_at: new Date().toISOString() }, ...prev]);
     setNewMemo('');
-    setShowAddForm(false);
     
     await fetch('/api/memo', {
       method: 'POST',
@@ -70,186 +59,107 @@ export default function IosRemindersApp() {
     });
   };
 
-  // Data processing
-  const grouped = { 'All': memos, ...categories.reduce((acc, cat) => ({...acc, [cat.name]: []}), {}) };
+  // Group memos
+  const grouped = { 'Uncategorized': [] };
+  categories.forEach(c => grouped[c.name] = []);
+  
   memos.forEach(m => {
+    let hasCat = false;
     if (m.categories) {
-      m.categories.filter(c => c !== 'Uncategorized').forEach(c => {
-        if (!grouped[c]) grouped[c] = [];
-        grouped[c].push(m);
+      m.categories.forEach(c => {
+        if (c !== 'Uncategorized') {
+          if (!grouped[c]) grouped[c] = [];
+          grouped[c].push(m);
+          hasCat = true;
+        }
       });
     }
+    if (!hasCat) grouped['Uncategorized'].push(m);
   });
 
-  const activeAll = memos.filter(m => !m.is_completed);
-  const completedAll = memos.filter(m => m.is_completed);
-
-  // Define iOS Colors
-  const UI_COLORS = {
-    red: '#ff3b30', green: '#34c759', yellow: '#ffcc00', 
-    blue: '#007aff', magenta: '#af52de', cyan: '#5ac8fa'
-  };
-
-  const getColor = (colorName) => UI_COLORS[colorName?.toLowerCase()] || '#8a8a8e';
-
-  // Screen Rendering
-  if (currentScreen === 'home') {
-    return (
-      <div className="ios-bg">
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px' }}>
-          <Link href="/dashboard" style={{ color: '#007aff', textDecoration: 'none', fontSize: '17px' }}>Desktop</Link>
-        </div>
-
-        {/* Smart Lists Grid */}
-        <div className="ios-grid">
-          <div className="ios-grid-card" onClick={() => { setActiveList('All'); setCurrentScreen('list'); }}>
-            <div className="ios-grid-icon-row">
-              <div className="ios-grid-icon" style={{ background: '#007aff' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              </div>
-              <div className="ios-grid-count">{activeAll.length}</div>
-            </div>
-            <div className="ios-grid-title">All</div>
-          </div>
-          
-          <div className="ios-grid-card" onClick={() => { setActiveList('Completed'); setCurrentScreen('list'); }}>
-            <div className="ios-grid-icon-row">
-              <div className="ios-grid-icon" style={{ background: '#8a8a8e' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </div>
-              <div className="ios-grid-count">{completedAll.length}</div>
-            </div>
-            <div className="ios-grid-title">Completed</div>
-          </div>
-        </div>
-
-        {/* My Lists Section */}
-        <h2 className="ios-list-header">My Lists</h2>
-        <div className="ios-list-group">
-          {categories.map(cat => {
-            const catItems = grouped[cat.name]?.filter(m => !m.is_completed) || [];
-            return (
-              <div key={cat.name} className="ios-list-row" onClick={() => { setActiveList(cat.name); setCurrentScreen('list'); }}>
-                <div className="ios-list-icon" style={{ background: getColor(cat.color) }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                </div>
-                <div className="ios-list-text">{cat.name}</div>
-                <div className="ios-list-count">{catItems.length}</div>
-                <div className="ios-list-chevron">›</div>
-              </div>
-            );
-          })}
-          {categories.length === 0 && (
-            <div className="ios-list-row">
-              <div className="ios-list-text" style={{ color: '#8a8a8e' }}>No custom lists.</div>
-            </div>
-          )}
-        </div>
-        
-        {/* Bottom Toolbar */}
-        <div className="ios-toolbar">
-          <button className="ios-new-btn" onClick={() => { setActiveList('All'); setCurrentScreen('list'); setShowAddForm(true); }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-            New Reminder
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // List Screen Data Preparation
-  let displayItems = [];
-  if (activeList === 'All') {
-    displayItems = memos.filter(m => !m.is_completed);
-  } else if (activeList === 'Completed') {
-    displayItems = memos.filter(m => m.is_completed);
-  } else {
-    displayItems = (grouped[activeList] || []).filter(m => !m.is_completed);
-  }
-  displayItems.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-  let listColor = '#007aff';
-  if (activeList === 'Completed') listColor = '#8a8a8e';
-  else if (activeList !== 'All') {
-    const catObj = categories.find(c => c.name === activeList);
-    listColor = getColor(catObj?.color);
-  }
-
   return (
-    <div className="ios-bg">
-      {/* Navbar */}
-      <div className="ios-nav-bar">
-        <button className="ios-back-btn" onClick={() => { setCurrentScreen('home'); setShowAddForm(false); }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          Lists
-        </button>
+    <div className="min-app-bg">
+      {/* Top Nav */}
+      <div className="min-top-nav">
+        <div className="min-nav-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        </div>
+        <div className="min-nav-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+        </div>
+        <div className="min-nav-title">All Tasks</div>
+        <div className="min-nav-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        </div>
+        <div className="min-nav-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+        </div>
       </div>
 
-      <h1 className="ios-large-title" style={{ color: listColor }}>{activeList}</h1>
-
-      {/* Task List */}
-      <div className="ios-list-group" style={{ marginTop: '10px' }}>
-        {displayItems.length === 0 && !showAddForm && (
-          <div className="ios-task-row">
-            <div className="ios-task-content">
-              <div className="ios-task-title" style={{ color: '#8a8a8e' }}>No reminders</div>
+      {/* Content Area */}
+      <div className="min-content">
+        {Object.entries(grouped).map(([groupName, groupMemos]) => {
+          if (groupMemos.length === 0) return null;
+          
+          return (
+            <div key={groupName}>
+              <div className="min-group-header">{groupName === 'Uncategorized' ? 'Tasks' : groupName}</div>
+              
+              {groupMemos.map(item => (
+                <div key={item.id} className={`min-task-row ${item.is_completed ? 'completed' : ''}`}>
+                  <input 
+                    type="checkbox" 
+                    className="min-checkbox"
+                    checked={item.is_completed}
+                    onChange={() => toggleComplete(item)}
+                  />
+                  <div className="min-task-text">{item.content}</div>
+                  {item.is_completed && (
+                    <button className="min-delete-btn" onClick={() => deleteMemo(item.id)}>✕</button>
+                  )}
+                </div>
+              ))}
             </div>
-          </div>
-        )}
+          );
+        })}
+      </div>
 
-        {displayItems.map(item => (
-          <div key={item.id} className="ios-task-row">
+      {/* Add Task Area */}
+      <div className="min-add-area">
+        <div className="min-input-wrapper">
+          <form onSubmit={handleAdd} style={{ width: '100%', margin: 0, padding: 0 }}>
             <input 
-              type="checkbox" 
-              className="ios-checkbox"
-              checked={item.is_completed}
-              onChange={() => toggleComplete(item)}
+              type="text" 
+              className="min-add-input"
+              placeholder="I want to..."
+              value={newMemo}
+              onChange={e => setNewMemo(e.target.value)}
             />
-            <div className="ios-task-content">
-              <div className="ios-task-title" style={{ textDecoration: item.is_completed ? 'line-through' : 'none', color: item.is_completed ? '#8a8a8e' : '#000' }}>
-                {item.content}
-              </div>
-              <div style={{ display: 'flex', gap: '5px', marginTop: '4px' }}>
-                <span style={{ fontSize: '12px', color: listColor }}>P{item.priority}</span>
-                {item.categories && item.categories.filter(c => c !== 'Uncategorized').map(cat => (
-                  <span key={cat} style={{ fontSize: '12px', color: '#8a8a8e' }}>#{cat}</span>
-                ))}
-              </div>
-            </div>
-            {/* Delete button masquerading as info or we just swipe. Since we can't swipe easily, we put a small trash icon */}
-            <button onClick={() => deleteMemo(item.id)} style={{ background: 'none', border: 'none', color: '#ff3b30', fontSize: '18px', padding: '0 15px', opacity: 0.8 }}>×</button>
-          </div>
-        ))}
-        
-        {/* Inline Add Form */}
-        {showAddForm && (
-          <div className="ios-task-row">
-            <div className="ios-checkbox" style={{ opacity: 0.3 }}></div>
-            <div className="ios-task-content">
-              <form onSubmit={handleAdd} style={{ width: '100%' }}>
-                <input 
-                  type="text" 
-                  value={newMemo}
-                  onChange={e => setNewMemo(e.target.value)}
-                  placeholder="Title"
-                  className="ios-add-input"
-                  autoFocus
-                  onBlur={() => {
-                    if (!newMemo.trim()) setShowAddForm(false);
-                  }}
-                />
-              </form>
-            </div>
-          </div>
-        )}
+          </form>
+        </div>
+        <button className="min-add-btn" onClick={handleAdd}>+</button>
       </div>
 
-      {/* Bottom Toolbar */}
-      <div className="ios-toolbar">
-        <button className="ios-new-btn" onClick={() => setShowAddForm(true)}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-          New Reminder
-        </button>
+      {/* Bottom Tab Nav */}
+      <div className="min-bottom-nav">
+        <div className="min-tab active">
+          <div className="min-tab-icon" style={{ background: '#333', color: 'white' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          Tasks
+        </div>
+        <div className="min-tab">
+          <div className="min-tab-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          </div>
+          Calendar
+        </div>
+        <div className="min-tab">
+          <div className="min-tab-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          </div>
+          Moment
+        </div>
       </div>
     </div>
   );
