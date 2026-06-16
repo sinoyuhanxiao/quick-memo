@@ -379,8 +379,8 @@ body::before {
 .min-app-bg { 
   background-color: #ffffff; 
   min-height: 100vh; 
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-  color: #111; 
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+  color: #0f172a; 
   display: flex;
   flex-direction: column;
 }
@@ -390,48 +390,50 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px 5px 20px;
-  background: #fff;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
   z-index: 50;
 }
-.min-nav-icon { color: #888; font-size: 20px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;}
-.min-nav-title { font-size: 18px; font-weight: 700; color: #111; text-align: center; flex: 1;}
+.min-nav-icon { color: #64748b; font-size: 20px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;}
+.min-nav-title { font-size: 17px; font-weight: 700; color: #0f172a; text-align: center; flex: 1; letter-spacing: -0.01em;}
 
 /* Content Area */
 .min-content {
   flex: 1;
-  padding-bottom: 140px; /* Space for add form + bottom nav */
+  padding-bottom: 160px; /* Space for add form + bottom nav */
   overflow-y: auto;
 }
 
 /* Group Headers */
 .min-group-header {
-  font-size: 20px;
-  font-weight: 700;
-  color: #111;
-  margin: 25px 20px 10px 20px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 32px 24px 12px 24px;
+  letter-spacing: -0.03em;
 }
 
 /* Task Row */
 .min-task-row {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
-  transition: opacity 0.2s;
+  padding: 14px 24px;
+  transition: opacity 0.3s ease;
 }
 .min-task-row.completed {
-  opacity: 0.4;
+  opacity: 0.5;
 }
 
 /* Checkbox */
 .min-checkbox {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  border: 1.5px solid #bbb;
-  margin-right: 15px;
+  border: 1.5px solid #cbd5e1;
+  margin-right: 16px;
   appearance: none;
   outline: none;
   cursor: pointer;
@@ -440,16 +442,17 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
 }
 .min-checkbox:checked {
-  background: #bbb;
-  border-color: #bbb;
+  background: #cbd5e1;
+  border-color: #cbd5e1;
 }
 /* The checkmark for checked state */
 .min-checkbox:checked::after {
   content: '';
-  width: 5px;
-  height: 10px;
+  width: 6px;
+  height: 11px;
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
@@ -459,30 +462,31 @@ body::before {
 /* Task Text */
 .min-task-text {
   font-size: 16px;
-  color: #333;
+  color: #334155;
   flex: 1;
   font-weight: 500;
   word-break: break-word;
+  line-height: 1.4;
 }
 .min-task-row.completed .min-task-text {
   text-decoration: line-through;
-  color: #999;
+  color: #94a3b8;
 }
 
 /* Delete Button */
 .min-delete-btn {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: #888;
+  background: #94a3b8;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 13px;
   border: none;
   cursor: pointer;
-  margin-left: 10px;
+  margin-left: 12px;
 }
 
 /* Sticky Bottom Input Area */
@@ -491,36 +495,39 @@ body::before {
   bottom: 60px; /* Above the tab nav */
   left: 0;
   width: 100%;
-  padding: 10px 20px;
-  background: #fff;
+  padding: 16px 24px;
+  background: linear-gradient(to top, #ffffff 60%, rgba(255,255,255,0));
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   z-index: 100;
 }
 .min-input-wrapper {
   flex: 1;
-  background: #fff;
-  border: 1px solid #eaeaea;
-  border-radius: 20px;
-  padding: 10px 15px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 12px 18px;
   display: flex;
   align-items: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
 }
 .min-add-input {
   width: 100%;
   border: none;
   background: transparent;
   font-size: 15px;
-  color: #333;
+  color: #0f172a;
   outline: none;
+  font-family: inherit;
+  font-weight: 500;
 }
-.min-add-input::placeholder { color: #ccc; }
+.min-add-input::placeholder { color: #cbd5e1; font-weight: 400; }
 .min-add-btn {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: #3498db; /* bright blue */
+  background: #0ea5e9; /* Vibrant sky blue */
   color: white;
   border: none;
   font-size: 24px;
@@ -530,7 +537,11 @@ body::before {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3);
+  transition: transform 0.2s ease;
+}
+.min-add-btn:active {
+  transform: scale(0.95);
 }
 
 /* Bottom Tab Navigation */
@@ -540,12 +551,13 @@ body::before {
   left: 0;
   width: 100%;
   height: 60px;
-  background: #fff;
-  border-top: 1px solid #f0f0f0;
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
   display: flex;
   justify-content: space-around;
   align-items: center;
   z-index: 110;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 .min-tab {
   display: flex;
@@ -553,22 +565,27 @@ body::before {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  color: #aaa;
+  color: #94a3b8;
   font-size: 10px;
   font-weight: 600;
   cursor: pointer;
+  transition: color 0.2s;
 }
-.min-tab.active { color: #333; }
+.min-tab.active { color: #0ea5e9; }
 .min-tab-icon {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #f0f0f0;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s;
 }
-.min-tab.active .min-tab-icon { background: #333; color: white; }
+.min-tab.active .min-tab-icon { 
+  background: #0ea5e9; 
+  color: white; 
+  box-shadow: 0 4px 10px rgba(14, 165, 233, 0.2);
+}
 
 .ios-bg { 
   background-color: #f2f2f7; 
