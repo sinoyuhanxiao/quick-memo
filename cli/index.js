@@ -189,27 +189,35 @@ function getColorForCategory(catName) {
 
 // Command Hints
 const COMMAND_HINTS = [
+    // Views
+    { cmd: '/todos', desc: 'Switch view to your active Todos' },
+    { cmd: '/done', desc: 'Switch view to Done List (or use /completed)' },
+    { cmd: '/learnings', desc: 'Switch view to Learning Zone' },
+    { cmd: '/history', desc: 'Toggle view between pending and completed tasks' },
+
+    // Actions
     { cmd: '/learn <text>', desc: 'Record a new learning for today' },
-    { cmd: '/learnings', desc: 'Switch view to your Learning Zone' },
-    { cmd: '/todos', desc: 'Switch view to your Todos (pending)' },
-    { cmd: '/completed', desc: 'Switch view to your completed Todos' },
-    { cmd: '/filter <cat>', desc: 'Filter by category (use "/filter none" for uncategorized)' },
+    { cmd: '/done <ids>', desc: 'Mark tasks as completed (e.g. /done 1 2)' },
+    { cmd: '/undo <ids>', desc: 'Mark tasks as pending again' },
+    { cmd: '/delete <ids>', desc: 'Delete tasks or learnings (alias: /rm)' },
+    { cmd: '/edit <id> <txt>', desc: 'Modify the text, priority, or tags of a task' },
+    { cmd: '/ai <text>', desc: 'Call AI to organize and categorize the task' },
+
+    // Data Management
+    { cmd: '/filter <arg>', desc: 'Filter by category or YYYY-MM-DD (use "none" or "clear")' },
+    { cmd: '/search <text>', desc: 'Search across all Todos and Learnings' },
+    { cmd: '/sort', desc: 'Toggle sorting between Priority and Newest' },
+    { cmd: '/refresh', desc: 'Sync data manually with the server' },
+
+    // Categories
     { cmd: '/categories', desc: 'List all existing categories' },
     { cmd: '/categories create <n>', desc: 'Create an empty category' },
     { cmd: '/categories rename <o> <n>', desc: 'Rename a category (use quotes "Old" "New")' },
     { cmd: '/categories delete <n>', desc: 'Delete a category globally' },
     { cmd: '/categories color <n> <c>', desc: 'Set color (red, green, yellow, blue, magenta, cyan)' },
-    { cmd: '/search <keyword>', desc: 'Search across all Todos and Learnings' },
-    { cmd: '/ai <text>', desc: 'Call AI to automatically categorize the memo' },
-    { cmd: '/done <ids>', desc: 'Mark one or more tasks as completed' },
-    { cmd: '/undo <ids>', desc: 'Mark completed tasks as pending again' },
-    { cmd: '/delete <ids>', desc: 'Permanently remove one or more tasks' },
-    { cmd: '/edit <id> <text>', desc: 'Modify the text of an existing task' },
-    { cmd: '/history', desc: 'Toggle view between pending and completed tasks' },
-    { cmd: '/sort', desc: 'Toggle sorting between Priority and Newest' },
-    { cmd: '/refresh', desc: 'Sync data manually with the server' },
-    { cmd: '/help', desc: 'Toggle this command list visibility' },
-    { cmd: '/exit', desc: 'Close the Q-TODO terminal' }
+
+    // Utilities
+    { cmd: '/exit', desc: 'Close the terminal (alias: /quit)' }
 ];
 
 // Initialize Readline
@@ -355,7 +363,7 @@ function drawUI() {
 
     // Help text
     console.log(`${c.dim}──────────────────────────────────────────────────────────────────${c.reset}`);
-    console.log(`${c.dim}💡 Type an idea to add it. Use !5 (High) to !1 (Low) to set priority.${c.reset}`);
+    console.log(`${c.dim}💡 Type an idea to add it. Use !5 (High) to !1 (Low) and #Tags to categorize.${c.reset}`);
     
     if (showHelp) {
         console.log(`${c.bold}${c.yellow}⚡ COMMANDS:${c.reset}`);
