@@ -3,7 +3,7 @@ export default function manifest() {
     name: 'Quick-Memo Dashboard',
     short_name: 'QuickMemo',
     description: 'Capture and organize ideas instantly',
-    start_url: '/',
+    start_url: '/mobile',
     display: 'standalone',
     background_color: '#f8f6f0',
     theme_color: '#c19a6b',
