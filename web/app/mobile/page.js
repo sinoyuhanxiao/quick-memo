@@ -1,20 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 
 export default function MinimalMobileApp() {
   const [memos, setMemos] = useState([]);
   const [categories, setCategories] = useState([]);
   const [newMemo, setNewMemo] = useState('');
 
-  useEffect(() => {
-    fetchData();
-    const handleFocus = () => fetchData();
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, []);
-
-  const fetchData = () => {
+  function fetchData() {
     Promise.all([
       fetch('/api/memo').then(res => res.json()),
       fetch('/api/categories').then(res => res.json())
@@ -22,7 +14,14 @@ export default function MinimalMobileApp() {
       if (memoData.memos) setMemos(memoData.memos);
       if (catData.categories) setCategories(catData.categories);
     });
-  };
+  }
+
+  useEffect(() => {
+    fetchData();
+    const handleFocus = () => fetchData();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -77,33 +76,56 @@ export default function MinimalMobileApp() {
     if (!hasCat) grouped['Uncategorized'].push(m);
   });
 
+  const totalTasks = memos.length;
+  const openTasks = memos.filter(m => !m.is_completed).length;
+  const completedTasks = totalTasks - openTasks;
+
   return (
     <div className="min-app-bg">
       {/* Top Nav */}
       <div className="min-top-nav">
-        <div className="min-nav-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        <div>
+          <div className="min-kicker">Quick Memo</div>
+          <div className="min-nav-title">Today&apos;s Tasks</div>
         </div>
-        <div className="min-nav-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-        </div>
-        <div className="min-nav-title">All Tasks</div>
-        <div className="min-nav-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-        </div>
-        <div className="min-nav-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+        <div className="min-count-pill">
+          <span>{openTasks}</span>
+          open
         </div>
       </div>
 
       {/* Content Area */}
       <div className="min-content">
+        <section className="min-hero-card">
+          <div>
+            <div className="min-hero-label">Progress</div>
+            <div className="min-hero-title">{completedTasks} done, {openTasks} left</div>
+          </div>
+          <div className="min-hero-meter">
+            <div
+              className="min-hero-meter-fill"
+              style={{ width: totalTasks ? `${Math.round((completedTasks / totalTasks) * 100)}%` : '0%' }}
+            />
+          </div>
+        </section>
+
+        {totalTasks === 0 && (
+          <div className="min-empty-state">
+            <div className="min-empty-icon">+</div>
+            <div className="min-empty-title">No tasks yet</div>
+            <div className="min-empty-copy">Add a quick memo below and it will show up here.</div>
+          </div>
+        )}
+
         {Object.entries(grouped).map(([groupName, groupMemos]) => {
           if (groupMemos.length === 0) return null;
           
           return (
-            <div key={groupName}>
-              <div className="min-group-header">{groupName === 'Uncategorized' ? 'Tasks' : groupName}</div>
+            <section key={groupName} className="min-group-card">
+              <div className="min-group-header">
+                <span>{groupName === 'Uncategorized' ? 'Inbox' : groupName}</span>
+                <span>{groupMemos.length}</span>
+              </div>
               
               {groupMemos.map(item => (
                 <div key={item.id} className={`min-task-row ${item.is_completed ? 'completed' : ''}`}>
@@ -113,37 +135,44 @@ export default function MinimalMobileApp() {
                     checked={item.is_completed}
                     onChange={() => toggleComplete(item)}
                   />
-                  <div className="min-task-text">{item.content}</div>
+                  <div className="min-task-body">
+                    <div className="min-task-text">{item.content}</div>
+                    {item.categories?.length > 0 && (
+                      <div className="min-task-meta">
+                        {item.categories.map(category => (
+                          <span key={category}>{category}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   {item.is_completed && (
                     <button className="min-delete-btn" onClick={() => deleteMemo(item.id)}>✕</button>
                   )}
                 </div>
               ))}
-            </div>
+            </section>
           );
         })}
       </div>
 
       {/* Add Task Area */}
       <div className="min-add-area">
-        <div className="min-input-wrapper">
-          <form onSubmit={handleAdd} style={{ width: '100%', margin: 0, padding: 0 }}>
+        <form onSubmit={handleAdd} className="min-input-wrapper">
             <input 
               type="text" 
               className="min-add-input"
-              placeholder="I want to..."
+              placeholder="Add a task..."
               value={newMemo}
               onChange={e => setNewMemo(e.target.value)}
             />
-          </form>
-        </div>
+        </form>
         <button className="min-add-btn" onClick={handleAdd}>+</button>
       </div>
 
       {/* Bottom Tab Nav */}
       <div className="min-bottom-nav">
         <div className="min-tab active">
-          <div className="min-tab-icon" style={{ background: '#333', color: 'white' }}>
+          <div className="min-tab-icon">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </div>
           Tasks
