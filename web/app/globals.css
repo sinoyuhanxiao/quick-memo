@@ -254,6 +254,9 @@ body::before {
   display: flex;
   flex-direction: column;
 }
+.mobile-tab-view { display: none; }
+.desktop-kanban { display: flex; }
+
 .kanban-container {
   display: flex;
   flex-direction: row;
@@ -270,22 +273,55 @@ body::before {
   display: flex;
   flex-direction: column;
   max-height: 80vh;
-  overflow-y: auto;
-}
-
 @media (max-width: 768px) {
+  .desktop-kanban { display: none !important; }
+  .mobile-tab-view { display: flex; flex-direction: column; }
+  
   .kanban-wrapper {
-    padding: 1.5rem 1rem;
+    padding: 1rem 0.5rem;
   }
-  .kanban-container {
+  
+  .mobile-tab-header {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.8rem;
+    padding-bottom: 1rem;
+    margin-bottom: 0.5rem;
+    scrollbar-width: none; /* Firefox */
+  }
+  .mobile-tab-header::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+  
+  .mobile-tab-btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.4);
+    color: var(--text-primary);
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mobile-tab-btn.active {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+  }
+  
+  .todo-row {
     flex-direction: column;
-    overflow-x: visible;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
   }
-  .kanban-column {
-    min-width: 100%;
-    max-width: 100%;
-    max-height: none;
-    overflow-y: visible;
+  .todo-content-wrapper {
+    width: 100%;
+  }
+  .todo-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-left: 0;
+    flex-wrap: wrap;
   }
 }
 

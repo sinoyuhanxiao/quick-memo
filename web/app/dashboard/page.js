@@ -150,53 +150,128 @@ export default function Dashboard() {
           </Link>
         </div>
       ) : (
-        <div className="kanban-container">
-          {Object.entries(grouped)
-            .filter(([cat]) => filterCategory === 'All' || cat === filterCategory)
-            .map(([cat, items], index) => {
-            const activeItems = items.filter(i => !i.is_completed);
-            const completedItems = items.filter(i => i.is_completed);
-          
-            return (
-              <div key={cat} className="glass-panel kanban-column animate-in" style={{ padding: '1.5rem', marginBottom: '1.5rem', animationDelay: `${index * 0.1}s` }}>
-                <h2 style={{ color: 'var(--accent-color)', marginBottom: '1rem' }}>{cat} <span style={{fontSize:'0.9rem', color:'var(--text-secondary)'}}>({activeItems.length})</span></h2>
-              
-              <div className="todo-list">
-                {activeItems.map(item => (
-                  <MemoRow 
-                    key={item.id} item={item} 
-                    toggleComplete={() => toggleComplete(item)}
-                    deleteMemo={() => deleteMemo(item.id)}
-                    startEdit={() => startEdit(item)}
-                    saveEdit={() => saveEdit(item.id)}
-                    isEditing={editingId === item.id}
-                    editContent={editContent}
-                    setEditContent={setEditContent}
-                    categories={categories}
-                  />
-                ))}
+        <>
+          {/* Desktop Kanban View */}
+          <div className="kanban-container desktop-kanban">
+            {Object.entries(grouped)
+              .filter(([cat]) => filterCategory === 'All' || cat === filterCategory)
+              .map(([cat, items], index) => {
+              const activeItems = items.filter(i => !i.is_completed);
+              const completedItems = items.filter(i => i.is_completed);
+            
+              return (
+                <div key={cat} className="glass-panel kanban-column animate-in" style={{ padding: '1.5rem', marginBottom: '1.5rem', animationDelay: `${index * 0.1}s` }}>
+                  <h2 style={{ color: 'var(--accent-color)', marginBottom: '1rem' }}>{cat} <span style={{fontSize:'0.9rem', color:'var(--text-secondary)'}}>({activeItems.length})</span></h2>
                 
-                {completedItems.length > 0 && (
-                  <div style={{ marginTop: '1rem', borderTop: '1px dashed var(--glass-border)', paddingTop: '1rem' }}>
-                    <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Completed</h4>
-                    <div className="todo-list" style={{ gap: '0.5rem' }}>
-                      {completedItems.map(item => (
+                <div className="todo-list">
+                  {activeItems.map(item => (
+                    <MemoRow 
+                      key={item.id} item={item} 
+                      toggleComplete={() => toggleComplete(item)}
+                      deleteMemo={() => deleteMemo(item.id)}
+                      startEdit={() => startEdit(item)}
+                      saveEdit={() => saveEdit(item.id)}
+                      isEditing={editingId === item.id}
+                      editContent={editContent}
+                      setEditContent={setEditContent}
+                      categories={categories}
+                    />
+                  ))}
+                  
+                  {completedItems.length > 0 && (
+                    <div style={{ marginTop: '1rem', borderTop: '1px dashed var(--glass-border)', paddingTop: '1rem' }}>
+                      <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Completed</h4>
+                      <div className="todo-list" style={{ gap: '0.5rem' }}>
+                        {completedItems.map(item => (
+                          <MemoRow 
+                            key={item.id} item={item} 
+                            toggleComplete={() => toggleComplete(item)}
+                            deleteMemo={() => deleteMemo(item.id)}
+                            isEditing={false}
+                            categories={categories}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Mobile Dedicated View */}
+          <div className="mobile-tab-view animate-in">
+            <div className="mobile-tab-header">
+               <button onClick={() => setFilterCategory('All')} className={`mobile-tab-btn ${filterCategory === 'All' ? 'active' : ''}`}>All Ideas</button>
+               {Object.keys(grouped).map(cat => (
+                 <button key={cat} onClick={() => setFilterCategory(cat)} className={`mobile-tab-btn ${filterCategory === cat ? 'active' : ''}`}>{cat}</button>
+               ))}
+            </div>
+            
+            <div className="glass-panel" style={{ padding: '1.2rem' }}>
+              <div className="todo-list">
+                {(() => {
+                  let displayItems = [];
+                  if (filterCategory === 'All') {
+                    Object.values(grouped).forEach(arr => displayItems.push(...arr));
+                    displayItems = Array.from(new Map(displayItems.map(item => [item.id, item])).values());
+                  } else {
+                    displayItems = grouped[filterCategory] || [];
+                  }
+                  
+                  if (sortBy === 'priority') {
+                    displayItems.sort((a, b) => b.priority - a.priority || new Date(b.created_at) - new Date(a.created_at));
+                  } else {
+                    displayItems.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                  }
+
+                  const activeItems = displayItems.filter(i => !i.is_completed);
+                  const completedItems = displayItems.filter(i => i.is_completed);
+
+                  return (
+                    <>
+                      {activeItems.length === 0 && completedItems.length === 0 && (
+                        <p style={{textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem 0'}}>No ideas here yet.</p>
+                      )}
+                      
+                      {activeItems.map(item => (
                         <MemoRow 
                           key={item.id} item={item} 
                           toggleComplete={() => toggleComplete(item)}
                           deleteMemo={() => deleteMemo(item.id)}
-                          isEditing={false}
+                          startEdit={() => startEdit(item)}
+                          saveEdit={() => saveEdit(item.id)}
+                          isEditing={editingId === item.id}
+                          editContent={editContent}
+                          setEditContent={setEditContent}
                           categories={categories}
                         />
                       ))}
-                    </div>
-                  </div>
-                )}
+                      
+                      {completedItems.length > 0 && (
+                        <div style={{ marginTop: '1.5rem', borderTop: '1px dashed var(--glass-border)', paddingTop: '1rem' }}>
+                          <h4 style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>Completed</h4>
+                          <div className="todo-list" style={{ gap: '0.8rem' }}>
+                            {completedItems.map(item => (
+                              <MemoRow 
+                                key={item.id} item={item} 
+                                toggleComplete={() => toggleComplete(item)}
+                                deleteMemo={() => deleteMemo(item.id)}
+                                isEditing={false}
+                                categories={categories}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
-              </div>
-            );
-          })}
-        </div>
+            </div>
+          </div>
+        </>
       )}
       
       {showManageModal && (
