@@ -275,7 +275,11 @@ function drawUI() {
         let displayTasks = viewMode === 'pending' ? tasks.filter(t => !t.is_completed) : tasks.filter(t => t.is_completed);
         
         if (filterCategory) {
-            displayTasks = displayTasks.filter(t => t.categories && t.categories.some(c => c.toLowerCase() === filterCategory.toLowerCase()));
+            displayTasks = displayTasks.filter(t => {
+                const matchesCat = t.categories && t.categories.some(c => c.toLowerCase() === filterCategory.toLowerCase());
+                const matchesDate = t.date_category && t.date_category === filterCategory;
+                return matchesCat || matchesDate;
+            });
         }
 
         if (displayTasks.length === 0) {
