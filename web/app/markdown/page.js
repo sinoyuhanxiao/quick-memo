@@ -231,13 +231,13 @@ export default function MarkdownEditor() {
       </div>
 
       {/* Full Page Editor / Preview Pane */}
-      <div style={{ flex: 1, display: 'flex', width: '100%', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', width: '100%', overflow: 'hidden', minHeight: 0 }}>
         
         {viewMode === 'edit' ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'transparent', width: '100%' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'transparent', width: '100%', minHeight: 0 }}>
             <textarea
               className="md-textarea"
-              style={{ flex: 1, padding: '2rem 4rem', fontSize: '1.1rem' }}
+              style={{ flex: 1, padding: '2rem 4rem', fontSize: '1.1rem', minHeight: 0, overflowY: 'auto' }}
               value={content}
               onChange={handleChange}
               placeholder="Start typing your markdown here..."
@@ -245,8 +245,8 @@ export default function MarkdownEditor() {
             />
           </div>
         ) : (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'transparent', width: '100%' }}>
-            <div className="md-preview" style={{ flex: 1, padding: '2rem 4rem' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'transparent', width: '100%', minHeight: 0 }}>
+            <div className="md-preview" style={{ flex: 1, padding: '2rem 4rem', minHeight: 0, overflowY: 'auto' }}>
               <ReactMarkdown
                 components={{
                   code({ node, inline, className, children, ...props }) {
