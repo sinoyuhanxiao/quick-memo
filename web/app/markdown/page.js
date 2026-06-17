@@ -167,10 +167,10 @@ export default function MarkdownEditor() {
   };
 
   return (
-    <div className="page-container" style={{ padding: '0 4rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden', background: 'var(--bg-color)' }}>
       
       {/* Header section */}
-      <div className="page-header">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', padding: '1.5rem 2rem 1rem 2rem', borderBottom: '1px solid var(--glass-border)' }}>
         <div>
           <div className="nav-links" style={{ marginBottom: '1rem' }}>
             <Link href="/dashboard" className="nav-link">
@@ -230,16 +230,14 @@ export default function MarkdownEditor() {
         </div>
       </div>
 
-      {/* Unified Editor / Preview Pane */}
-      <div className="md-split-pane">
+      {/* Full Page Editor / Preview Pane */}
+      <div style={{ flex: 1, display: 'flex', width: '100%', overflow: 'hidden' }}>
         
         {viewMode === 'edit' ? (
-          <div className="glass-panel md-pane" style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
-            <div className="md-pane-header">
-              Raw Markdown
-            </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'transparent', width: '100%' }}>
             <textarea
               className="md-textarea"
+              style={{ flex: 1, padding: '2rem 4rem', fontSize: '1.1rem' }}
               value={content}
               onChange={handleChange}
               placeholder="Start typing your markdown here..."
@@ -247,11 +245,8 @@ export default function MarkdownEditor() {
             />
           </div>
         ) : (
-          <div className="glass-panel md-pane" style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
-            <div className="md-pane-header">
-              Live Preview
-            </div>
-            <div className="md-preview">
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'transparent', width: '100%' }}>
+            <div className="md-preview" style={{ flex: 1, padding: '2rem 4rem' }}>
               <ReactMarkdown
                 components={{
                   code({ node, inline, className, children, ...props }) {
