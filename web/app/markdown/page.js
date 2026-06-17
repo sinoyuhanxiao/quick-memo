@@ -217,39 +217,42 @@ export default function MarkdownEditor() {
 
       {/* Side-by-Side Editor & Preview Pane */}
       <div className="md-split-pane">
-        
-        <div className="glass-panel md-pane" style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
-          <div className="md-pane-header">
-            Raw Markdown
+        <div className="md-container">
+          
+          <div className="md-pane md-pane-left">
+            <div className="md-pane-header">
+              Raw Markdown
+            </div>
+            <textarea
+              className="md-textarea"
+              value={content}
+              onChange={handleChange}
+              placeholder="Start typing your markdown here..."
+              spellCheck={false}
+            />
           </div>
-          <textarea
-            className="md-textarea"
-            value={content}
-            onChange={handleChange}
-            placeholder="Start typing your markdown here..."
-            spellCheck={false}
-          />
-        </div>
 
-        <div className="glass-panel md-pane" style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
-          <div className="md-pane-header">
-            Live Preview
-          </div>
-          <div className="md-preview">
-            <ReactMarkdown
-              components={{
-                code({ node, inline, className, children, ...props }) {
-                  const match = /language-(\w+)/.exec(className || '');
-                  if (!inline && match && match[1] === 'mermaid') {
-                    return <Mermaid chart={String(children).replace(/\n$/, '')} />;
+          <div className="md-pane">
+            <div className="md-pane-header">
+              Live Preview
+            </div>
+            <div className="md-preview">
+              <ReactMarkdown
+                components={{
+                  code({ node, inline, className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || '');
+                    if (!inline && match && match[1] === 'mermaid') {
+                      return <Mermaid chart={String(children).replace(/\n$/, '')} />;
+                    }
+                    return <code className={className} style={{ background: 'rgba(0,0,0,0.05)', padding: '0.2rem 0.4rem', borderRadius: '4px' }} {...props}>{children}</code>;
                   }
-                  return <code className={className} style={{ background: 'rgba(0,0,0,0.05)', padding: '0.2rem 0.4rem', borderRadius: '4px' }} {...props}>{children}</code>;
-                }
-              }}
-            >
-              {content}
-            </ReactMarkdown>
+                }}
+              >
+                {content}
+              </ReactMarkdown>
+            </div>
           </div>
+          
         </div>
 
       </div>
