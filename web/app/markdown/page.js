@@ -140,15 +140,6 @@ export default function MarkdownEditor() {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Auto-resize textarea when content changes
-  const textareaRef = useRef(null);
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-    }
-  }, [content, viewMode]);
-
   const handleChange = (e) => {
     const newContent = e.target.value;
     setContent(newContent);
@@ -176,7 +167,7 @@ export default function MarkdownEditor() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', background: 'var(--bg-color)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden', background: 'var(--bg-color)' }}>
       
       {/* Header section */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', padding: '1.5rem 2rem 1rem 2rem', borderBottom: '1px solid var(--glass-border)' }}>
@@ -240,14 +231,13 @@ export default function MarkdownEditor() {
       </div>
 
       {/* Full Page Editor / Preview Pane */}
-      <div style={{ flex: 1, display: 'flex', width: '100%' }}>
+      <div style={{ flex: 1, display: 'flex', width: '100%', overflow: 'hidden' }}>
         
         {viewMode === 'edit' ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'transparent', width: '100%' }}>
             <textarea
-              ref={textareaRef}
               className="md-textarea"
-              style={{ flex: 1, padding: '2rem 4rem', fontSize: '1.1rem', minHeight: '80vh', overflow: 'hidden' }}
+              style={{ flex: 1, padding: '2rem 4rem', fontSize: '1.1rem' }}
               value={content}
               onChange={handleChange}
               placeholder="Start typing your markdown here..."
@@ -256,7 +246,7 @@ export default function MarkdownEditor() {
           </div>
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'transparent', width: '100%' }}>
-            <div className="md-preview" style={{ flex: 1, padding: '2rem 4rem', minHeight: '80vh' }}>
+            <div className="md-preview" style={{ flex: 1, padding: '2rem 4rem' }}>
               <ReactMarkdown
                 components={{
                   code({ node, inline, className, children, ...props }) {
