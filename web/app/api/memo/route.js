@@ -7,6 +7,17 @@ const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) 
   : null;
 
+export async function OPTIONS(req) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+}
+
 export async function POST(req) {
   try {
     const { text, priority, categories: manualCategories, is_completed } = await req.json();
@@ -88,10 +99,16 @@ export async function POST(req) {
       console.warn('POSTGRES_URL is not set. Skipping database insert.', { text, priority, categories });
     }
 
-    return NextResponse.json({ success: true, categories });
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    };
+
+    return NextResponse.json({ success: true, categories }, { headers: corsHeaders });
   } catch (error) {
     console.error('Failed to create memo:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
   }
 }
 
