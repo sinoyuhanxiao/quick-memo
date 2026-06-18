@@ -119,7 +119,10 @@ export async function GET(req) {
       let dateCategory = 'Unknown';
       if (r.completed_at) {
         const d = new Date(r.completed_at);
-        dateCategory = d.toISOString().split('T')[0];
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        dateCategory = `${year}-${month}-${day}`;
       }
       return {
         ...r,
